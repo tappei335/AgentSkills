@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Strategy"
+  short_description: "Plan implementation with evidence and adversarial review"
+  default_prompt: "Use $feature-implementation-strategy to plan this feature implementation, consult advisor and reviewer subagents where useful, and synthesize the best path before writing code."

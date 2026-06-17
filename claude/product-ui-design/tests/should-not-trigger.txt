@@ -1,0 +1,23 @@
+# Queries that should NOT trigger the product-ui-design skill
+# Use these to validate the description field does not over-trigger.
+
+Create a landing page for our product launch
+Build a marketing site with hero section and pricing
+Write unit tests for the API handler
+Fix the database migration script
+Design a promotional banner for the campaign
+Add a Go endpoint for project creation
+Refactor the orchestrator state machine
+Create a brand-first visual exploration for the homepage
+Build an animated hero section with particle effects
+Write a README for the repository
+Set up CI/CD pipeline configuration
+Fix a CSS bug where the button color is wrong
+Implement the GitHub OAuth callback handler
+Add Docker healthcheck to the worker container
+Create an email template for user notifications
+Optimize the SQL query for task listing
+Build a concept-heavy redesign of the entire brand
+Add WebSocket support for real-time updates
+Write a migration to add a new column
+Debug why the SSE connection drops
