@@ -1,0 +1,23 @@
+# Queries that SHOULD trigger the product-ui-design skill
+# Use these to validate the description field catches relevant requests.
+
+Build a dashboard for the project overview page
+Make a settings page for user preferences
+Implement the admin panel with user management
+Redesign this CRUD screen to be more usable
+Add an onboarding flow for new users
+Create a form view for task creation
+Build an app shell with sidebar navigation
+Improve the existing table layout — it feels cluttered
+Fix the sidebar navigation styling
+Restyle the profile settings page
+Add a data table with sorting and filtering
+Build a workflow status view
+Create a notification center panel
+Implement a multi-step wizard for project setup
+Design a role-based permissions management screen
+Make the task list view more scannable
+Build an activity feed for the dashboard
+Add filters and search to the project list
+Implement a detail pane layout for task review
+Refactor the header and breadcrumb navigation

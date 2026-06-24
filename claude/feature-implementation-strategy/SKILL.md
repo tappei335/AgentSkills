@@ -1,104 +1,163 @@
 ---
 name: feature-implementation-strategy
 description: >
-  Plan feature implementation before code changes, using repository evidence,
-  candidate strategies, and optional subagent consultation via the Agent/Workflow
-  tools to improve accuracy through advisor input, sparring, and adversarial review
-  while maximizing delivery speed, runtime performance, memory use, correctness,
-  maintainability, and verification confidence. Use when the user asks for an
-  implementation strategy, design approach, roadmap, task breakdown, tradeoff
-  analysis, performance or memory planning, risk review, "機能実装に向けた戦略検討",
-  "実装方針", "設計方針", or similar planning before implementation.
+  Plan large or consequential feature implementations before code changes by
+  defining the goal as a value function, mapping system impact, comparing
+  candidate strategies, and using subagents via the Agent/Workflow tools (or
+  local role simulation) for metacognitive critique. Use when the user asks for
+  an implementation strategy, design approach, roadmap, task breakdown,
+  architecture planning, tradeoff analysis, performance or memory planning,
+  rollout or migration planning, risk review, "機能実装に向けた戦略検討",
+  "実装方針", "設計方針", or similar planning before substantial implementation work.
 ---
 
 # Feature Implementation Strategy
 
+Use this skill for substantial implementation work where the main risk is not typing code, but choosing the right goal, scope, architecture, tradeoffs, sequencing, and verification plan.
+
 ## Operating Contract
 
-Produce an implementation strategy before editing product code. Optimize the plan for the requested outcome, delivery speed, runtime speed, memory use, correctness, maintainability, and verification confidence.
+Produce a strategy before editing product code. Treat implementation planning as value maximization under constraints: define what outcome matters, which engineering qualities matter most for this feature, and which tradeoffs are acceptable.
 
-If the user only asks for strategy, do not implement. If the user asks for both strategy and implementation, complete the strategy first, then proceed only when no unresolved product, architecture, public API, dependency, data migration, or rollout decision remains.
+Do not optimize every dimension equally. Rank correctness, user value, delivery speed, runtime speed, memory use, readability, maintainability, operability, security, migration safety, rollout safety, and reviewability according to the user's goal and repository context.
 
-Ask before accepting a strategy that changes agreed architecture, public API, dependency choices, data contracts, security posture, or user-visible product behavior. Use `AskUserQuestion` when offering discrete choices.
+If the user only asks for strategy, do not implement. If the user asks for both strategy and implementation, complete the strategy first, then proceed only when no unresolved product, architecture, public API, dependency, data migration, security, or rollout decision remains.
+
+Ask before accepting a strategy that changes agreed architecture, public API, dependency choices, data contracts, security posture, user-visible behavior, operational behavior, or irreversible data shape. Use `AskUserQuestion` when offering discrete choices.
 
 When the strategy is substantial and you want approval before any code change, present it through `EnterPlanMode` / `ExitPlanMode` rather than editing files.
 
-## Startup
+## Strategic Framing
+
+Start by making the objective explicit:
+
+1. State the user goal in outcome terms, not implementation terms.
+2. Identify the beneficiary: end user, operator, developer, reviewer, system reliability, business workflow, or future extension.
+3. Define success criteria, non-goals, constraints, and assumptions.
+4. Rank the value priorities for this task. Use an ordered list, not a generic set.
+5. Identify hard constraints that cannot be traded away: API compatibility, data integrity, latency target, memory ceiling, dependency policy, migration window, rollout policy, security requirement, or deadline.
+6. Identify where quality can be intentionally deferred without undermining the goal.
+
+Example priority orders:
+
+- User-facing workflow: correctness > UX continuity > rollout safety > latency > maintainability > delivery speed.
+- Hot-path backend change: correctness > runtime speed > memory use > operability > maintainability > delivery speed.
+- Emergency fix: correctness > rollback safety > delivery speed > blast-radius reduction > readability > completeness.
+- Platform foundation: correctness > maintainability > architecture fit > testability > operability > delivery speed.
+
+When the goal or priority order is ambiguous, infer a conservative value function from the request and repository evidence. Ask one concise question (via `AskUserQuestion`) only when the answer would materially change architecture, data shape, security posture, public behavior, or rollout strategy.
+
+## System Map
+
+Build a map before choosing an approach:
 
 1. Read project instructions (`CLAUDE.md`, `AGENTS.md`, relevant docs) before forming the plan.
 2. Inspect the current repository state (`Bash`: `git status` / `git diff`) and treat pre-existing changes as user work.
-3. Inspect the relevant code, tests, fixtures, configuration, schemas, docs, and existing patterns with `Read` / `Grep` / `Glob` (or an `Explore` subagent for broad sweeps). Do not rely on memory or agent self-reports.
-4. Restate the feature goal, success criteria, non-goals, constraints, and assumptions.
-5. Identify the affected ownership boundary: UI, API, domain logic, persistence, background jobs, integrations, analysis pipeline, CLI, infrastructure, docs, or tests.
+3. Inspect relevant code, tests, fixtures, configuration, schemas, docs, and existing patterns with `Read` / `Grep` / `Glob` (or an `Explore` subagent for broad sweeps). Do not rely on memory or agent self-reports.
+4. Map affected boundaries: UI, API, domain logic, persistence, background jobs, integrations, analysis pipeline, CLI, infrastructure, observability, docs, and tests.
+5. Trace data flow, control flow, ownership boundaries, public contracts, and user workflows touched by the feature.
+6. Identify invariants, compatibility promises, permissions, failure modes, and existing extension points.
+7. Distinguish known facts, inferences, assumptions, and unknowns.
 
-If required information is missing, make conservative assumptions when reversible. Ask one concise question (via `AskUserQuestion`) when proceeding would create meaningful product, architecture, data, security, or operational risk.
+Prefer repository evidence over plausible architecture stories. Cite important files (`path:line`), symbols, interfaces, schemas, or commands in the final strategy.
 
-## Subagent Consultation
+## Subagent Metacognition Protocol
 
-For non-trivial, ambiguous, high-risk, performance-sensitive, security-sensitive, cross-boundary, or high-impact work, consult subagents as planning advisors. Claude Code delegates through the `Agent` tool — each subagent runs in its own isolated context and returns only its final message, so it is ideal for bounded, self-contained probes. Pick the agent type by job:
+Use subagents as metacognitive pressure, not as decision owners. The main agent remains responsible for synthesis, judgment, and final recommendation.
+
+For large, ambiguous, high-risk, cross-boundary, performance-sensitive, security-sensitive, migration-heavy, or high-impact work, consult subagents when subagent use is available and authorized by the active tool rules. If subagents are unavailable, simulate the same roles locally and label them as simulated.
+
+Claude Code delegates through the `Agent` tool — each subagent runs in its own isolated context and returns only its final message, so it is ideal for bounded, self-contained probes. Pick the agent type by job:
 
 - `Plan` — design and architecture reasoning over the existing codebase; best for proposing or stress-testing an implementation path.
 - `Explore` — read-only, broad fan-out search across files and naming conventions; returns conclusions, not file dumps. Use to locate extension points and existing patterns.
 - `general-purpose` — multi-step research or open-ended investigation when the first few tries may miss.
 
-Use distinct roles:
+Assign narrow roles with distinct lenses:
 
-- Advisor: propose a practical implementation path, hidden constraints, likely sequencing, and useful simplifications.
-- Sparring partner: challenge the preferred approach, goal framing, and tradeoffs; suggest simpler or more robust alternatives.
-- Adversarial reviewer: look for correctness, performance, memory, security, migration, rollout, observability, and verification failures. Prompt the reviewer to default to refuting when uncertain.
+- Goal critic: challenge whether the goal, success criteria, and value priorities match the user's real need.
+- System mapper: find affected boundaries, hidden coupling, data flow, ownership issues, and existing extension points.
+- Architecture critic: test whether candidate approaches fit existing architecture or distort responsibilities.
+- Simplifier: identify scope that can be removed, phased, or deferred without losing core value.
+- Risk reviewer: look for correctness, security, privacy, migration, rollback, operability, and blast-radius failures.
+- Performance and memory reviewer: examine hot paths, algorithmic cost, I/O, batching, caching, cloning, allocation, and peak memory.
+- Verification strategist: propose tests, fixtures, observability, manual checks, benchmarks, and rollback validation that create real confidence.
+- Adversarial reviewer: assume the plan will fail and identify why. Prompt it to default to refuting when uncertain.
 
-Delegate narrow questions, not ownership of the strategy. Give each subagent the feature goal, constraints, relevant evidence (cite `path:line`), candidate approaches, the specific decision or risk to evaluate, and the expected output shape. Ask for concise recommendations, risks, and tests rather than full implementation.
-
-Avoid duplicate work by assigning distinct lenses such as API compatibility, performance and memory, test strategy, migration risk, operational safety, or invariant pressure. Launch independent subagents in a single message so they run concurrently. Prefer one consultation pass and one adversarial review pass unless the feature's risk clearly justifies more.
+Delegate bounded questions, not the whole strategy. Give each subagent the goal, value priorities, constraints, relevant evidence (cite `path:line`), candidate approaches when known, the exact failure mode or decision to evaluate, and the expected output shape. Ask for concise facts, inferences, objections, and recommended changes with citations where possible. Launch independent subagents in a single message so they run concurrently.
 
 For heavier planning — many independent subquestions to cover in parallel, or a generate-candidates → judge → synthesize structure that benefits from deterministic fan-out — reach for the `Workflow` tool. Only escalate to `Workflow` when the user has explicitly opted into multi-agent orchestration; otherwise propose it and ask.
 
-Skip subagent consultation for small, reversible, low-risk changes where direct evidence is sufficient. If subagents are unavailable or not authorized, simulate the advisor, sparring partner, and adversarial reviewer roles locally.
+Reconcile every material critique as adopted, rejected with reason, or unresolved with confidence impact. Do not let disagreement block progress unless it exposes a concrete product, architecture, public API, dependency, data, security, or rollout decision that needs user input.
 
-Do not outsource the decision. Treat subagent output as evidence to evaluate, not authority to defer to. Reconcile it against repository evidence, project instructions, existing architecture, and user constraints; discard unsupported claims.
+## Candidate Strategy Design
 
-Do not let subagent disagreement block progress unless it exposes a concrete product, architecture, public API, dependency, data, security, or rollout decision that needs user input.
+Create candidates after the system map is credible:
 
-## Strategy Workflow
-
-1. Map the requested feature to existing architecture, module ownership, extension points, and user or system workflows.
-2. Gather evidence from current code, tests, docs, runtime behavior, logs, schemas, and recent patterns. Cite the important files (`path:line`), symbols, or interfaces in the final strategy.
-3. Define at least two candidate approaches for non-trivial work. Include a minimal viable path and a more robust or scalable path when they differ.
-4. Score each candidate across:
-   - Delivery speed: diff size, complexity, reviewability, migration cost, dependency churn, and coordination cost.
+1. Define at least two candidate approaches for non-trivial work. Include a minimal viable path and a more durable path when they differ.
+2. For each candidate, explain the architectural shape, implementation sequence, changed boundaries, data or API changes, rollout path, and rollback path.
+3. Evaluate each candidate against the task's ranked value priorities, not against a generic ideal.
+4. Make tradeoffs explicit:
+   - Delivery speed: diff size, complexity, reviewability, coordination cost, dependency churn, and migration cost.
    - Runtime speed: algorithmic complexity, hot-path impact, traversal count, I/O, network calls, batching, caching, concurrency, and incremental reuse.
-   - Memory use: peak memory, retained state, cloning or copying, object lifetimes, data structure choice, streaming, pagination, and cache size.
-   - Quality: correctness, maintainability, testability, observability, failure modes, accessibility or usability where relevant, docs, and compatibility.
-   - Risk: rollback path, data integrity, security, privacy, operational safety, degraded cases, public API exposure, and invariant pressure.
-   - Review confidence: agreement or disagreement across advisors and reviewers, strength of evidence behind objections, unresolved risks, and changes made after critique.
-5. For non-trivial work, gather independent critiques of the candidate approaches through subagents or local role simulation. Record meaningful disagreements, missed risks, and alternative slices before choosing a strategy.
-6. Choose one strategy. Explain why it maximizes the requested objective instead of merely being easy to implement.
-7. Break the chosen strategy into implementation slices. For each slice, state likely files or components, expected behavior, tests or fixtures, and acceptance checks.
-8. Identify work that can run in parallel and work that must stay sequential because it decides architecture, API shape, data shape, rollout behavior, or shared contracts.
-9. Define verification before coding starts. Include focused unit tests, integration or end-to-end tests, static checks, formatting/linting, manual checks, performance measurement, memory checks, and rollback validation as appropriate for the codebase.
+   - Memory use: peak memory, retained state, cloning or copying, object lifetimes, data structures, streaming, pagination, and cache bounds.
+   - Readability and maintainability: local clarity, responsibility boundaries, naming, abstraction weight, testability, and future change cost.
+   - Correctness and risk: invariants, data integrity, security, privacy, degraded modes, compatibility, rollback, and operational safety.
+   - Review confidence: evidence quality, critique results, testability, and remaining unknowns.
+5. Choose the strategy that maximizes the stated value function. Do not choose a strategy merely because it is easiest to implement or most theoretically complete.
 
-## Performance And Memory Lens
+Prefer the smallest strategy that preserves the long-term architecture needed by the goal. Avoid speculative abstraction that does not reduce present complexity or protect an identified future change.
 
-Prefer simple, measurable performance decisions over speculative optimization.
+## Decision Ledger
 
-- Start from expected input scale, traffic shape, latency targets, memory limits, and hot paths.
-- Avoid repeated full-data scans when a local pass, index, cache, stream, incremental update, or existing query can serve the same need.
-- Avoid unnecessary deep clones, large temporary collections, eager materialization, duplicate serialization, and unbounded caches.
-- Prefer streaming, pagination, batching, pooling, stable identifiers, compact summaries, and backpressure when they match existing local patterns.
-- Treat graceful degradation as an explicit design point when exact behavior would be expensive, unreliable, or outside the current scope.
-- Add benchmarks or profiling only when the feature is performance-sensitive or when the strategy depends on an unproven performance claim.
+Record decisions that matter:
+
+- Decided now: architecture, ownership, public contracts, data shape, dependency choices, rollout model, verification gates.
+- Deferred intentionally: decisions that can wait without increasing risk.
+- Rejected alternatives: approaches considered and why they lose under the value priorities.
+- Open decisions: questions requiring user, product, security, operations, or maintainer input.
+- Irreversible or expensive decisions: migrations, API changes, data deletion, dependency adoption, behavior changes, and rollout commitments.
+
+Use the ledger to prevent accidental scope drift and to make later implementation checkpoints auditable.
+
+## Execution Slices And Checkpoints
+
+Break the chosen strategy into slices that can be reviewed and verified:
+
+1. Order slices to reduce uncertainty early: schema or contract proof, architecture scaffolding, core behavior, integration, UI or workflow, migration, observability, cleanup.
+2. For each slice, list likely files or components, expected behavior, tests or fixtures, and acceptance checks.
+3. Identify parallelizable work and work that must stay sequential because it decides architecture, API shape, data shape, rollout behavior, or shared contracts.
+4. Define checkpoint moments where the plan should be re-evaluated before continuing.
+5. State stop conditions: findings that should pause implementation and trigger user or maintainer input.
+
+During implementation after the strategy, update the plan when evidence disproves an assumption. Do not keep executing a stale strategy just because it was written first.
+
+## Verification And Rollout Plan
+
+Define verification before coding starts:
+
+- Unit, integration, end-to-end, fixture, snapshot, migration, compatibility, and regression tests as appropriate.
+- Static checks, formatting, linting, type checks, schema validation, generated code checks, and docs checks.
+- Performance or memory measurement when the value priorities or chosen strategy depend on speed or memory claims.
+- Observability: logs, metrics, traces, audit events, dashboards, or alerts needed to detect bad rollout behavior.
+- Manual checks for user workflows, accessibility, error states, degraded modes, and operator actions.
+- Rollout, feature flags, backfill, dual-read/write, compatibility window, rollback, and data recovery where relevant.
+
+Verification should prove the strategy's value priorities, not just that code was exercised.
 
 ## Output Format
 
 Use this structure unless the user requested a different format:
 
-1. Goal and constraints.
-2. Current-system evidence (with `path:line` references).
-3. Candidate strategies with a compact tradeoff table.
-4. Recommended strategy and rationale.
-5. Implementation sequence.
-6. Verification plan.
-7. Subagent input summary: consulted or simulated roles, strongest objections, adopted changes, and rejected recommendations with reasons.
-8. Open decisions, risks, or assumptions.
+1. Goal and value priorities.
+2. Current-system evidence and system map (with `path:line` references).
+3. Constraints, assumptions, and non-goals.
+4. Candidate strategies with a compact tradeoff comparison.
+5. Recommended strategy and why it maximizes the value function.
+6. Decision ledger.
+7. Execution slices and checkpoints.
+8. Verification, rollout, and rollback plan.
+9. Subagent metacognition summary: roles consulted or simulated, strongest objections, adopted changes, rejected recommendations, and unresolved risks.
+10. Open decisions or questions.
 
-Keep the recommendation concrete enough that another agent can implement it without redesigning the feature.
+Keep the strategy concrete enough that another agent can implement it without redesigning the feature, while still making the reasoning and tradeoffs visible enough for review.
