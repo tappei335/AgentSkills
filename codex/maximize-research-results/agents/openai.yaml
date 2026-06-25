@@ -1,4 +1,4 @@
 interface:
   display_name: "Maximize Research Results"
-  short_description: "Iterate with critique for stronger research"
-  default_prompt: "Use $maximize-research-results to investigate this topic, iterate with critique, and deliver the strongest supported findings."
+  short_description: "Use subagents and critique for stronger research"
+  default_prompt: "Use $maximize-research-results to investigate this topic, consult a focused subagent whenever available and permitted, iterate with critique, and deliver the strongest supported findings."

@@ -3,8 +3,8 @@ name: maximize-research-results
 description: >
   Improve investigation and research tasks by inferring the user's real intent,
   decision context, success criteria, constraints, and expected deliverable, then
-  iterating with evidence gathering, subagent consultation via the Agent/Workflow
-  tools, critique, and synthesis. Use when the user asks to investigate, research,
+  iterating with evidence gathering, mandatory subagent consultation via the Agent
+  tool when available and permitted, critique, and synthesis. Use when the user asks to investigate, research,
   look into, analyze, audit, compare, diagnose, find root cause, summarize findings,
   or "調査して", especially when the request is broad, ambiguous, high-impact, or
   would benefit from structured inquiry before answering.
@@ -14,7 +14,7 @@ description: >
 
 ## Overview
 
-Turn a research request into a precise investigation brief, then iterate until the answer is useful, well-supported, and hard to improve within the task constraints. Treat nontrivial investigations as iterative: gather initial evidence, consult focused subagents (the `Agent` tool) or run equivalent skeptical review, reconcile critique, then finalize. Prefer moving forward with explicit assumptions over blocking on clarification unless a missing answer would materially change the investigation path.
+Turn a research request into a precise investigation brief, then iterate until the answer is useful, well-supported, and hard to improve within the task constraints. Treat investigations as iterative: gather initial evidence, consult focused subagents (the `Agent` tool) whenever they are available and permitted, reconcile critique, then finalize. If subagents cannot be used, run equivalent skeptical review locally and disclose that fallback. Prefer moving forward with explicit assumptions over blocking on clarification unless a missing answer would materially change the investigation path.
 
 ## Workflow
 
@@ -37,7 +37,7 @@ Before deep work, form a short internal brief:
 - Primary question: the one question that must be answered.
 - Subquestions: the 2-5 supporting questions that reduce uncertainty.
 - Evidence plan: local files (`Read`/`Grep`/`Glob`), tests, logs, git history (`Bash`: `git log`/`git blame`), official docs, primary sources, web search (`WebSearch`/`WebFetch`), or domain references.
-- Consultation plan: whether to use subagents, what each should independently check, and what disagreement would change the answer.
+- Consultation plan: which required subagent role or roles to use, what each should independently check, and what disagreement would change the answer.
 - Stop condition: what evidence is enough to answer responsibly.
 - Failure modes: likely ways the investigation could be misleading, stale, incomplete, or overfit to one source.
 
@@ -51,7 +51,9 @@ Claude Code delegates through the `Agent` tool. Each subagent runs with its own 
 - `general-purpose` — multi-step research, web + code investigation, or open-ended search when the first few tries may miss.
 - `Plan` — design and architecture reasoning over an existing codebase.
 
-When delegation is allowed and the investigation is nontrivial, use it before finalizing. Use one skeptical subagent by default for broad, high-impact, ambiguous, or uncertain investigations. Add specialized subagents only when they reduce distinct uncertainty. Skip subagents for narrow, low-risk tasks where direct evidence is already sufficient.
+When delegation is allowed, subagent consultation through `Agent` is required for every invocation of this skill before finalizing. Use at least one focused subagent. Do not skip subagents merely because the task is narrow, low-risk, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
+
+Use one skeptical subagent by default for broad, high-impact, ambiguous, or uncertain investigations. Add specialized subagents only when they reduce distinct uncertainty. Do not finalize until the required subagent result has been considered, unless the subagent is unavailable, blocked, or stale enough that waiting would no longer be useful; in that case, state the reason and run the equivalent role locally.
 
 For heavier work — many independent subquestions to cover in parallel, or a find → verify → synthesize structure that benefits from deterministic fan-out and adversarial verification — reach for the `Workflow` tool (or the `deep-research` skill for cited web reports). Only escalate to `Workflow` when the user has opted into multi-agent orchestration; otherwise propose it and ask.
 
@@ -68,7 +70,7 @@ Delegate only concrete, self-contained tasks with a requested output shape. Avoi
 
 The main agent remains responsible for synthesis, verification, and final judgment. Verify cited evidence, resolve conflicts, reject unsupported claims, and update the investigation path when new evidence changes the answer.
 
-If subagents are unavailable, run the same loop as a self-review: strategy check, evidence gap check, adversarial critique, then final answer review.
+If subagents are unavailable or delegation is prohibited by active policy, run the same loop as a self-review: strategy check, evidence gap check, adversarial critique, then final answer review. State this limitation in the final answer when the investigation was nontrivial or when subagent use would normally have been visible.
 
 ### 4. Gather Evidence Broad-to-Deep
 
@@ -127,7 +129,7 @@ Before finalizing, verify:
 - The answer addresses the user's likely underlying goal, not only the literal wording.
 - The investigation scope and assumptions are visible if they affect the conclusion.
 - Evidence quality matches the stakes and recency requirements.
-- A focused subagent or equivalent skeptical pass challenged the conclusion for nontrivial investigations.
+- A focused subagent challenged the conclusion, or subagents were unavailable/prohibited and an equivalent local skeptical pass was disclosed where material.
 - Material critique was adopted, rejected with reason, or disclosed as unresolved with confidence impact.
 - Important alternatives or counterevidence were considered.
 - The answer still matches the requested deliverable; interesting but irrelevant findings were discarded.
