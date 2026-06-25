@@ -1,4 +1,0 @@
-interface:
-  display_name: "CodeAnalyzer Team Dev"
-  short_description: "Coordinate value-driven CodeAnalyzer team development"
-  default_prompt: "Use $codeanalyzer-team-dev to plan this CodeAnalyzer task around explicit value priorities, split genuinely independent work across isolated workers where useful, integrate and review the result, verify the workspace, and publish a ready PR when authorized."

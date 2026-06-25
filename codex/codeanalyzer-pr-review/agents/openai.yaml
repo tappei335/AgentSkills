@@ -1,6 +1,0 @@
-interface:
-  display_name: "CA PR Review"
-  short_description: "Review CodeAnalyzer PRs and publish bot comments by default."
-  default_prompt: "Use $codeanalyzer-pr-review to resolve a concrete GitHub PR first, review only that PR's GitHub diff and context, inspect CI and prior review context where relevant, run a skeptical pass, and publish through the CodeAnalyzer Review Bot unless posting was explicitly disabled."
-policy:
-  allow_implicit_invocation: true
