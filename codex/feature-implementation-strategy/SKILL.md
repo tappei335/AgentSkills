@@ -1,6 +1,6 @@
 ---
 name: feature-implementation-strategy
-description: Plan large or consequential feature implementations before code changes by defining the goal as a value function, mapping system impact, comparing candidate strategies, and using subagents or local role simulation for metacognitive critique. Use when the user asks Codex for implementation strategy, design approach, roadmap, task breakdown, architecture planning, tradeoff analysis, performance or memory planning, rollout or migration planning, risk review, "機能実装に向けた戦略検討", "実装方針", "設計方針", or similar planning before substantial implementation work.
+description: Plan large or consequential feature implementations before code changes by defining the goal as a value function, mapping system impact, comparing candidate strategies, and requiring subagent critique for metacognitive review. Use when the user asks Codex for implementation strategy, design approach, roadmap, task breakdown, architecture planning, tradeoff analysis, performance or memory planning, rollout or migration planning, risk review, "機能実装に向けた戦略検討", "実装方針", "設計方針", or similar planning before substantial implementation work.
 ---
 
 # Feature Implementation Strategy
@@ -55,7 +55,9 @@ Prefer repository evidence over plausible architecture stories. Cite important f
 
 Use subagents as metacognitive pressure, not as decision owners. The main agent remains responsible for synthesis, judgment, and final recommendation.
 
-For large, ambiguous, high-risk, cross-boundary, performance-sensitive, security-sensitive, migration-heavy, or high-impact work, consult subagents when subagent use is available and authorized by the active tool rules. If subagents are unavailable, simulate the same roles locally and label them as simulated.
+Always consult real subagents before finalizing the strategy. Treat subagent consultation as required even for narrow planning tasks; scale the number and roles to the task's risk. Use at least one subagent for narrow tasks, and use multiple distinct subagent roles for large, ambiguous, high-risk, cross-boundary, performance-sensitive, security-sensitive, migration-heavy, or high-impact work.
+
+If subagent tools are unavailable, blocked, or disallowed by the active tool rules, stop and report that the strategy cannot be completed under this skill's required subagent protocol. Do not use local substitutes.
 
 Assign narrow roles with distinct lenses:
 
@@ -139,7 +141,7 @@ Use this structure unless the user requested a different format:
 6. Decision ledger.
 7. Execution slices and checkpoints.
 8. Verification, rollout, and rollback plan.
-9. Subagent metacognition summary: roles consulted or simulated, strongest objections, adopted changes, rejected recommendations, and unresolved risks.
+9. Subagent metacognition summary: roles consulted, strongest objections, adopted changes, rejected recommendations, and unresolved risks.
 10. Open decisions or questions.
 
 Keep the strategy concrete enough that another agent can implement it without redesigning the feature, while still making the reasoning and tradeoffs visible enough for review.

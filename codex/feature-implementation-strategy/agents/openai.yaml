@@ -1,4 +1,4 @@
 interface:
   display_name: "Feature Strategy"
   short_description: "Plan large implementations by optimizing goal tradeoffs"
-  default_prompt: "Use $feature-implementation-strategy to define the goal and value priorities, map system impact, consult metacognitive subagent roles where useful, compare implementation strategies, and produce execution checkpoints before writing code."
+  default_prompt: "Use $feature-implementation-strategy to define the goal and value priorities, map system impact, consult required metacognitive subagents, compare implementation strategies, and produce execution checkpoints before writing code."
