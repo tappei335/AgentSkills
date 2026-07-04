@@ -40,6 +40,26 @@ scripts/sync_skills.sh --agent claude
 
 The script replaces destination skill directories with the same name, such as `~/.codex/skills/<skill-name>` or `~/.claude/skills/<skill-name>`. Skills that exist only in the destination are left untouched.
 
+On Windows, import only Codex skills with PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\import_codex_skills.ps1
+```
+
+Preview changes without copying:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\import_codex_skills.ps1 -DryRun
+```
+
+Import selected skills:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\import_codex_skills.ps1 -SkillName product-ui-design,github-pr-review
+```
+
+The PowerShell script copies `codex/*` to `$env:CODEX_HOME\skills` when `CODEX_HOME` is set, otherwise to `$HOME\.codex\skills`.
+
 ## Validation
 
 Run the repository checks after editing skills:
