@@ -7,7 +7,7 @@ description: Coordinate explicit multi-agent repository implementation work with
 
 ## Operating Contract
 
-Run substantial repository changes as a coordinated team workflow only when coordination materially improves implementation, review confidence, or throughput. Keep the main agent accountable for goal framing, worker scope, repository guardrails, integration, review disposition, verification, publication decisions, and the final user-facing result.
+Run substantial repository changes as a coordinated team workflow only when the work splits into two or more disjoint write scopes, or one write scope plus independent review value. If it does not split, use light team mode. Keep the main agent accountable for goal framing, worker scope, repository guardrails, integration, review disposition, verification, publication decisions, and the final user-facing result.
 
 Prefer more specific skills when they match the request better:
 

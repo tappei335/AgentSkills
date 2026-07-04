@@ -7,6 +7,13 @@ description: Review GitHub pull requests in any repository and produce actionabl
 
 Review the specified GitHub pull request with a code-review stance: prioritize correctness, regressions, security/privacy, project invariants, missing tests, and CI risk over summaries or style commentary.
 
+Hard rules, in priority order:
+
+1. No evidence, no finding: every finding carries location, severity, type/category, problem, impact, and a fix direction.
+2. Default to chat-only review. Publish only when the user asks to post or a project rule makes posting the default.
+3. Run the Final Skeptical Pass before answering. Cut any finding you cannot defend from the diff, surrounding code, tests, or CI evidence.
+4. Never approve, request changes, merge, close, resolve threads, push commits, or modify files unless explicitly asked.
+
 ## Workflow
 
 1. Identify the repository and PR from the user's PR number, URL, branch, commit SHA, commit range, current checkout, or provided diff. If the PR cannot be identified, ask one concise question for the missing identifier.
@@ -44,7 +51,7 @@ When publishing:
 
 ## Findings
 
-Prefer concrete findings over general suggestions. Each finding should include:
+Prefer concrete findings over general suggestions. Each finding must include:
 
 - `Severity`: `Critical`, `High`, `Medium`, or `Low`.
 - `Type`: `Potential issue`, `Refactor suggestion`, or `Nitpick`.

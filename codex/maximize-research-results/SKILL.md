@@ -38,7 +38,14 @@ Do not expose this brief unless it helps the user understand the plan or the tas
 
 ### 3. Use Subagents for Iteration
 
-Subagent consultation is required for every invocation of this skill. Use at least one focused subagent before finalizing. Do not skip subagents merely because the task is narrow, low-risk, urgent, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
+Codex delegates through collab subagents. Pick the agent type by job:
+
+- `explorer` — read-only evidence sweeps, codebase questions, and critique-style consultations. Give it a narrow question and an expected output shape.
+- `worker` — bounded probes that must run commands, reproduce behavior, or measure something in a forked workspace.
+
+Keep review-style consultations (adversarial review, final answer review) read-only; an `explorer` with a critique prompt is usually enough. Each subagent starts cold and cannot see this conversation, so put the primary question, scope, and evidence into the prompt text.
+
+Subagent consultation is required for every invocation of this skill. Use at least one focused subagent before finalizing. Launch it as soon as a draft direction exists, not after the answer is written; a reviewer consulted only at the end rubber-stamps instead of changing the result. Do not skip subagents merely because the task is narrow, low-risk, urgent, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
 
 Use one skeptical subagent by default for broad, high-impact, ambiguous, or uncertain investigations. Add specialized subagents only when they reduce distinct uncertainty. Do not finalize until the required subagent result has been considered. If active tool policy requires explicit user permission before delegation, ask for that permission before continuing; if permission is not granted, stop with a blocker.
 
@@ -46,7 +53,7 @@ Prefer these consultation roles:
 
 - Strategy check: ask whether the investigation brief targets the user's real decision and whether the evidence plan is sufficient.
 - Independent evidence check: assign a bounded subquestion, source family, code path, or comparison criterion.
-- Adversarial review: ask for counterexamples, missing assumptions, alternative root causes, and weak claims.
+- Adversarial review: ask for counterexamples, missing assumptions, alternative root causes, and weak claims. Prompt the reviewer to default to refuting when uncertain.
 - Final answer review: ask whether the draft conclusion is supported, actionable, and missing anything material.
 
 Every subagent prompt must include the primary question, scope boundary, evidence already found, the subagent's specific role, expected output format, and failure modes to check. Ask subagents to separate facts, inferences, and recommendations, and to cite files, commands, sources, or concrete observations for material claims.

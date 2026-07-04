@@ -59,6 +59,8 @@ Always consult real subagents before finalizing the strategy. Treat subagent con
 
 If subagent tools are unavailable, blocked, or disallowed by the active tool rules, stop and report that the strategy cannot be completed under this skill's required subagent protocol. Do not use local substitutes.
 
+Codex delegates through collab subagents. Use `explorer` agents for the read-only critic roles below — give each a narrow question and an expected output shape. Use a `worker` only when a critique needs a hands-on spike, reproduction, or measurement in a forked workspace. Each subagent starts cold and cannot see this conversation, so put the goal, priorities, constraints, and evidence into the prompt text.
+
 Assign narrow roles with distinct lenses:
 
 - Goal critic: challenge whether the goal, success criteria, and value priorities match the user's real need.
@@ -68,7 +70,7 @@ Assign narrow roles with distinct lenses:
 - Risk reviewer: look for correctness, security, privacy, migration, rollback, operability, and blast-radius failures.
 - Performance and memory reviewer: examine hot paths, algorithmic cost, I/O, batching, caching, cloning, allocation, and peak memory.
 - Verification strategist: propose tests, fixtures, observability, manual checks, benchmarks, and rollback validation that create real confidence.
-- Adversarial reviewer: assume the plan will fail and identify why.
+- Adversarial reviewer: assume the plan will fail and identify why. Prompt it to default to refuting when uncertain.
 
 Delegate bounded questions, not the whole strategy. Give each subagent the goal, value priorities, constraints, relevant evidence, candidate approaches when known, and the exact failure mode or decision to evaluate. Ask for concise facts, inferences, objections, and recommended changes with citations where possible.
 
@@ -143,5 +145,7 @@ Use this structure unless the user requested a different format:
 8. Verification, rollout, and rollback plan.
 9. Subagent metacognition summary: roles consulted, strongest objections, adopted changes, rejected recommendations, and unresolved risks.
 10. Open decisions or questions.
+
+Scale the document to the decision at stake: compress or omit sections that would not change what gets built. The tradeoff comparison and the recommended strategy carry the value; do not pad with restated generalities.
 
 Keep the strategy concrete enough that another agent can implement it without redesigning the feature, while still making the reasoning and tradeoffs visible enough for review.

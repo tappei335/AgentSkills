@@ -22,8 +22,9 @@ Run separate manager and designer execution contexts. Keep the roles separate in
 
 When sub-agent tools are available and the user request invokes this skill or otherwise permits delegation, the main agent MUST act as manager and MUST delegate implementation to a designer worker sub-agent for every implementation pass. Do not silently collapse the workflow into one self-reviewed pass. If the runtime has no sub-agent capability or the harness policy does not permit delegation for the request, state that limitation before proceeding and still perform distinct manager and designer passes locally.
 
-- The **main agent/manager** critiques screenshots, diffs, DOM/CSS reconstruction, responsive behavior, and image-use policy. The manager must not implement a pass that should be delegated.
-- Spawn or assign a **designer/worker** sub-agent to implement fixes from the manager's review list. The designer must edit files in its assigned write scope and must not approve its own work.
+- The **main agent/manager** critiques screenshots, diffs, DOM/CSS reconstruction, responsive behavior, and image-use policy. The manager must not implement a pass that should be delegated. The manager runs Playwright captures and comparisons itself.
+- Spawn the **designer** as a Codex `worker` sub-agent to implement fixes from the manager's review list. The worker starts cold and cannot see the manager's conversation, so each pass's prompt must carry the reconstruction plan, the current ordered fix list, the write scope, and the image-use policy constraints. The designer must edit files in its assigned write scope and must not approve its own work.
+- Use an `explorer` sub-agent for read-only target DOM/CSS inspection sweeps when that helps the manager build a fix list without mutating anything.
 - The main agent coordinates captures, passes artifacts and fix lists to the designer, integrates or reviews returned changes, and enforces acceptance gates.
 - For each iteration, obtain a manager review before the designer starts the next fix pass, then re-capture with Playwright before manager re-review.
 - If a separate reviewer sub-agent is useful and available, use it for independent final critique, but do not use that as a substitute for the manager/designer loop.

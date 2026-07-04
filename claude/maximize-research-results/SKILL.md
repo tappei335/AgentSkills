@@ -53,7 +53,7 @@ Claude Code delegates through the `Agent` tool. Each subagent runs with its own 
 - `general-purpose` — multi-step research, web + code investigation, or open-ended search when the first few tries may miss.
 - `Plan` — design and architecture reasoning over an existing codebase.
 
-Subagent consultation through `Agent` is required for every invocation of this skill before finalizing. Use at least one focused subagent. Do not skip subagents merely because the task is narrow, low-risk, urgent, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
+Subagent consultation through `Agent` is required for every invocation of this skill before finalizing. Use at least one focused subagent. Launch it as soon as a draft direction exists, not after the answer is written; a reviewer consulted only at the end rubber-stamps instead of changing the result. Do not skip subagents merely because the task is narrow, low-risk, urgent, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
 
 Use one skeptical subagent by default for broad, high-impact, ambiguous, or uncertain investigations. Add specialized subagents only when they reduce distinct uncertainty. Do not finalize until the required subagent result has been considered. If active tool policy requires explicit user permission before delegation, ask for that permission before continuing; if permission is not granted, stop with a blocker.
 
@@ -68,7 +68,7 @@ Prefer these consultation roles:
 
 Every subagent prompt must include the primary question, scope boundary, evidence already found, the subagent's specific role, expected output format, and failure modes to check. Ask subagents to separate facts, inferences, and recommendations, and to cite files (`path:line`), commands, sources, or concrete observations for material claims.
 
-Delegate only concrete, self-contained tasks with a requested output shape. Avoid asking multiple subagents the same vague question unless independent consensus is the goal. Launch independent subagents in a single message so they run concurrently, and continue local work while they run. Treat subagent results as leads and critique inputs, not conclusions.
+Delegate only concrete, self-contained tasks with a requested output shape. Avoid asking multiple subagents the same vague question unless independent consensus is the goal. Launch independent subagents in a single message so they run concurrently, and continue local work while they run. For follow-up questions across critique loops, continue an already-consulted agent with `SendMessage(to=<agent name>)` instead of respawning it, so its accumulated context is preserved. Treat subagent results as leads and critique inputs, not conclusions.
 
 The main agent remains responsible for synthesis, verification, and final judgment. Verify cited evidence, resolve conflicts, reject unsupported claims, and update the investigation path when new evidence changes the answer.
 

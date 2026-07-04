@@ -84,7 +84,7 @@ Assign narrow roles with distinct lenses:
 - Verification strategist: propose tests, fixtures, observability, manual checks, benchmarks, and rollback validation that create real confidence.
 - Adversarial reviewer: assume the plan will fail and identify why. Prompt it to default to refuting when uncertain.
 
-Delegate bounded questions, not the whole strategy. Give each subagent the goal, value priorities, constraints, relevant evidence (cite `path:line`), candidate approaches when known, the exact failure mode or decision to evaluate, and the expected output shape. Ask for concise facts, inferences, objections, and recommended changes with citations where possible. Launch independent subagents in a single message so they run concurrently.
+Delegate bounded questions, not the whole strategy. Give each subagent the goal, value priorities, constraints, relevant evidence (cite `path:line`), candidate approaches when known, the exact failure mode or decision to evaluate, and the expected output shape. Ask for concise facts, inferences, objections, and recommended changes with citations where possible. Launch independent subagents in a single message so they run concurrently. When a revised plan needs a second opinion from a role already consulted, continue that agent with `SendMessage(to=<agent name>)` instead of respawning it, so its earlier critique stays in context.
 
 For heavier planning — many independent subquestions to cover in parallel, or a generate-candidates → judge → synthesize structure that benefits from deterministic fan-out — reach for the `Workflow` tool. Only escalate to `Workflow` when the user has explicitly opted into multi-agent orchestration; otherwise propose it and ask.
 
@@ -159,5 +159,7 @@ Use this structure unless the user requested a different format:
 8. Verification, rollout, and rollback plan.
 9. Subagent metacognition summary: roles consulted or simulated, strongest objections, adopted changes, rejected recommendations, and unresolved risks.
 10. Open decisions or questions.
+
+Scale the document to the decision at stake: compress or omit sections that would not change what gets built. The tradeoff comparison and the recommended strategy carry the value; do not pad with restated generalities.
 
 Keep the strategy concrete enough that another agent can implement it without redesigning the feature, while still making the reasoning and tradeoffs visible enough for review.
