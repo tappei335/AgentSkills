@@ -1,126 +1,74 @@
 ---
 name: team-dev
-description: Coordinate explicit multi-agent repository implementation work with value priorities, disjoint ownership, real or simulated team roles, integration review, verification, and optional PR publication. Use when the user invokes `$team-dev`, says "team development mode" or "チーム開発モード", asks to split implementation across multiple engineers/workers, or requests parallel implementers plus reviewers for a substantial code change. Do not use for planning-only strategy, investigation/audit, PR review, or small single-agent edits unless the user explicitly asks for team mode.
+description: Coordinate explicit multi-agent repository implementation with outcome-focused task framing, independent ownership, integration review, verification, and optional publication. Use when the user invokes `$team-dev`, says "team development mode" or "チーム開発モード", asks to split implementation across engineers or workers, or requests parallel implementers and reviewers. Do not use for planning-only strategy, investigation or audit, PR review, or small single-agent edits unless the user explicitly requests team mode.
 ---
 
 # Team Dev
 
 ## Operating Contract
 
-Run substantial repository changes as a coordinated team workflow only when the work splits into two or more disjoint write scopes, or one write scope plus independent review value. If it does not split, use light team mode. Keep the main agent accountable for goal framing, worker scope, repository guardrails, integration, review disposition, verification, publication decisions, and the final user-facing result.
+Keep the main agent accountable for the outcome, shared decisions, integration, verification, review disposition, and final response. Delegate only bounded work that is independent enough to run without repeated coordination. Use light mode when the task has no useful split.
 
-Prefer more specific skills when they match the request better:
+Prefer a more specific skill when it matches the requested outcome:
 
-- Use `$feature-implementation-strategy` for planning-only architecture, tradeoff, roadmap, or implementation strategy work.
+- Use `$feature-implementation-strategy` for planning-only architecture, tradeoffs, roadmaps, or implementation strategy.
 - Use `$maximize-research-results` for investigation, audit, diagnosis, comparison, or broad research.
-- Use `$github-pr-review` or a project-specific PR review skill for PR review.
-- Use UI or site-design skills when the task is primarily product UI or site recreation.
+- Use `$github-pr-review` or a project-specific review skill for PR review.
+- Use an applicable UI or site-design skill when the change is primarily visual product work.
 
-If `$team-dev` is explicitly invoked for a small docs, skill, tooling, or single-file change, use light team mode: make the scoped edit directly, simulate the relevant review lenses locally, and report why full worker delegation or worktree isolation was unnecessary.
+## Frame The Outcome
 
-## Mode Gate
+Before delegating, inspect repository instructions, relevant code, tests, build scripts, and CI. Write a compact team contract containing:
 
-Before assigning work, decide the operating mode and state it briefly.
+- **Outcome:** the user-visible or maintenance result.
+- **Priorities:** the ranked value function used to resolve tradeoffs.
+- **Scope:** non-goals, repository guardrails, and protected user changes.
+- **Success:** required behavior, evidence, and checks.
+- **Ownership:** each role's bounded write scope, integration contracts, and locked files.
+- **Model policy:** automatic selection or justified per-role model and reasoning overrides.
+- **Authority:** local actions allowed by the request and actions that still require approval.
 
-1. Define the outcome goal, success criteria, non-goals, and ranked value priorities.
-2. Read repository instructions and inspect relevant code, tests, docs, build scripts, and CI before planning.
-3. Extract project guardrails: dependency direction, generated-file rules, public API promises, schemas/migrations, security boundaries, review rules, and required checks.
-4. Decide whether real delegation is allowed and useful under the active tool policy. If real subagents are unavailable or disallowed, simulate roles locally and do not describe the result as parallel execution.
-5. Decide whether worktrees are necessary. Use explicit worktrees for concurrent write-owning workers or dirty-checkout isolation. Do not require worktrees for planning-only, read-only review, local simulation, or small single-agent edits.
-6. Split only independent work with clear write ownership. Keep shared architecture, public contracts, schema shape, dependency choices, and release decisions with the main agent.
+Keep shared architecture, public contracts, schema shape, dependency choices, security posture, and release decisions with the main agent. Update the contract only when evidence invalidates an assumption.
 
-Read [delegation.md](references/delegation.md) before spawning subagents, assigning reviewers, or creating worktrees.
+## Choose The Smallest Useful Team
 
-## Team Contract
+- **Light mode:** implement directly and apply local regular and adversarial review lenses. Use for small docs, skills, tooling, single-file, or tightly coupled changes.
+- **Delegated mode:** assign one or more independent implementation or support slices and an independent reviewer when this improves throughput or confidence.
+- **High-risk mode:** add an architect before cross-boundary implementation and an adversarial reviewer over the integrated diff.
 
-Draft a compact team contract before implementation:
+Use only roles with a concrete contribution: sidecar investigator, implementer, test/fixture/docs worker, architect reviewer, regular reviewer, or adversarial reviewer. Do not create parallel work merely to fill roles.
 
-- **Goal:** user-visible outcome or repository-maintenance result.
-- **Priorities:** ordered value function, such as correctness > migration safety > reviewability > speed.
-- **Non-goals:** explicit boundaries and intentional deferrals.
-- **Guardrails:** repository rules and invariants that workers must preserve.
-- **Plan:** architecture shape, affected areas, integration points, and stop conditions.
-- **Ownership:** worker roles, write scopes, worktrees/branches when used, and locked files.
-- **Review:** architect, regular, and adversarial lenses scaled to risk.
-- **Verification:** commands or manual checks required before finalizing.
-- **Publication:** local-only, commit-only, or PR plan, including blockers.
+Read [delegation.md](references/delegation.md) completely before spawning subagents, selecting per-role models, assigning real reviewers, or creating worktrees. If delegation is unavailable or disallowed, simulate only the useful review lenses locally and label them as simulated.
 
-Use the contract to prevent scope drift. Update it when evidence invalidates an assumption.
+## Execute
 
-## Role Selection
+1. Assign independent work with explicit outcomes, ownership, constraints, integration assumptions, evidence, and stop conditions.
+2. Launch independent agents concurrently when safe. While they run, perform only non-overlapping integration, discovery, or review preparation.
+3. Inspect worker diffs and evidence. Integrate deliberately; do not trust summaries alone.
+4. Add focused tests, fixtures, docs, migrations, or generated artifacts required by the behavior change.
+5. Review the integrated result at the risk-appropriate lenses. Classify every actionable finding as `fixed`, `not adopted` with a reason, or `blocked`.
+6. Run repository-native checks on the integrated workspace. Re-run affected checks after material fixes.
+7. Publish only when the user authorized the external write. Before committing, pushing, or opening a PR, confirm the intended diff and repository conventions.
 
-Use only roles that materially help the task.
+Continue through safe, in-scope local reading, editing, and validation without asking for confirmation. Stop before destructive actions, external writes, material scope expansion, or decisions that change an agreed public API, data shape, dependency policy, security posture, or release risk.
 
-- **Main integrator:** owns decisions, plan revisions, integration, verification, and final response.
-- **Implementer:** owns one disjoint product-code slice, package, module, screen, migration, or command.
-- **Test/fixture/docs worker:** owns acceptance coverage or supporting artifacts after expected behavior is specified.
-- **Sidecar investigator:** performs read-only discovery for unfamiliar code or hidden dependencies.
-- **Architect reviewer:** checks boundaries, dependency direction, public API/data impact, migration safety, and alternatives.
-- **Regular reviewer:** checks correctness, regressions, tests, fixtures, diagnostics, accessibility, security, and user-visible behavior.
-- **Adversarial reviewer:** challenges assumptions, degraded cases, scope creep, accidental API changes, false-green validation, and unnecessary abstraction.
+## Completion Gate
 
-Workers must be told that they are not alone in the codebase, must not revert others' edits, must stay within assigned ownership, must preserve discovered guardrails, and must list changed files in their final response.
+Before reporting completion:
 
-Suggested shapes:
+- Inspect `git diff --stat`, the full intended diff, and `git diff --check`.
+- Confirm ownership boundaries, repository guardrails, behavior coverage, generated-file handling, and unrelated dirty files.
+- Verify the final answer includes the outcome, material evidence, unresolved risk, and next action when one remains.
 
-- **Light mode:** main agent implements; local regular/adversarial review. Use for small docs, skills, tooling, or narrow edits.
-- **Narrow implementation:** one implementer plus one reviewer. Add architect review when public contracts, migrations, or boundaries are involved.
-- **Cross-boundary change:** two or more disjoint implementers plus architect and regular review.
-- **High-risk change:** add adversarial review over the integrated diff, and refresh verification after every material fix.
-
-## Execution
-
-1. Complete the mode gate and team contract.
-2. Create worktrees only when the mode requires concurrent writers or dirty-checkout isolation.
-3. Delegate sidecar investigation or disjoint implementation with explicit ownership. Launch independent agents in parallel when possible.
-4. While workers run, do only non-overlapping main-agent work: inspect, refine the plan, prepare review criteria, or draft PR text.
-5. Integrate worker results deliberately. Inspect diffs and changed files instead of trusting summaries.
-6. Add or update focused tests, fixtures, docs, migrations, or generated artifacts for behavior changes.
-7. Run architect, regular, and adversarial review lenses according to risk. Real reviewers are preferred when available; otherwise local simulation must be labeled.
-8. Resolve every actionable reviewer finding as fixed, intentionally not adopted with reason, or blocked.
-9. Verify the integrated workspace using repository-native commands.
-10. Publish only when authorized and safe: commit intended changes, push a topic branch, and open a ready PR when requested or expected.
-
-Re-evaluate after architect feedback, first worker output, integration, verification failure, and before publication. Pause for user input when a finding would change agreed architecture, public API, dependency policy, data shape, security posture, or release risk.
-
-## Review And Verification
-
-Review is a completion gate. Do not skip it, replace still-running real reviewers solely for speed, or omit unresolved findings.
-
-At minimum inspect:
-
-- `git diff --stat` and `git diff --check`.
-- Changed code paths and changed tests, fixtures, docs, migrations, or generated artifacts.
-- Repository guardrails, especially dependency direction, generated-file handling, public API changes, schema/migration impact, behavior coverage, and unrelated dirty files.
-- Worker and reviewer findings already received.
-
-Choose verification from the repository's own tooling: CI workflows, package scripts, Makefiles, contribution docs, and local conventions. Prefer build/typecheck, formatter, linter/static analysis, targeted tests, broader tests for shared behavior, and generated-file checks when source-of-truth files changed.
-
-For skill-only changes inside this AgentSkills repository, prefer:
+For skill-only changes in this repository, run:
 
 ```bash
 python3 scripts/validate_skills.py
 git diff --check -- <changed-skill-paths>
 ```
 
-For installed or standalone skills outside this repository, use `quick_validate.py` as a generic fallback:
-
-```bash
-python3 /home/ippei/.codex/skills/.system/skill-creator/scripts/quick_validate.py <path-to-skill-folder>
-```
+For standalone skills, use the skill creator's `quick_validate.py` as a generic fallback.
 
 ## Final Response
 
-For implementation tasks, report:
-
-- Implemented scope.
-- Operating mode, roles used, and whether roles were delegated or simulated locally.
-- Worktrees and branches used, or why they were unnecessary.
-- Files changed.
-- Verification commands run, failures, and skipped checks.
-- Review findings disposition.
-- Branch, commit, and PR URL when publication succeeded.
-- Publication blockers or the reason work stayed local.
-- Remaining risks or follow-up choices, if any.
-
-For planning-only or review-only requests that explicitly invoked `$team-dev`, report the selected mode, why implementation delegation did or did not apply, findings or plan output, and any blocked publication or verification step.
+Lead with the implemented outcome. Include the operating mode and real or simulated roles, changed files, verification results, review disposition, publication state, and material remaining risks. Omit process detail that does not help the user assess or continue the work.

@@ -1,112 +1,98 @@
 # Delegation Playbook
 
-Use this reference when `$team-dev` will spawn subagents, assign reviewers, or create worktrees.
+Use this reference only when `$team-dev` will spawn subagents, assign real reviewers, or create worktrees.
 
-## Capability Gate
+## Capability And Task Gate
 
-Before delegation, check the active tool policy.
+- Spawn subagents only when the user explicitly invoked team mode or requested delegation or parallel workers, and the active policy allows it.
+- Delegate a task only when its outcome, ownership, inputs, dependencies, and stop condition can be stated clearly.
+- Run independent tasks concurrently. Keep coupled tasks sequential or under one owner.
+- Use read-only agents for narrow discovery or review and write-owning agents for bounded implementation.
+- Keep semantic decisions, approvals, integration, and final validation with the main agent.
+- If delegation is unavailable, use local review lenses and report them as simulation, never as parallel execution.
 
-- Spawn real subagents only when the user explicitly invoked `$team-dev`, asked for delegation/parallel workers, or otherwise authorized multi-agent work.
-- Use `explorer` agents for read-only codebase questions. Give them a narrow question and expected output shape.
-- Use `worker` agents for bounded implementation. Assign a disjoint write scope and tell them to edit directly in their forked workspace when the tool supports that.
-- If real subagents are unavailable, blocked, or disallowed, use local role simulation and label it as simulation in the final response.
-- Do not pretend local simulation was parallel execution.
+## Model And Reasoning Selection
 
-## Worker Prompt Checklist
+Prefer automatic model selection unless quality, latency, or cost requirements justify an override. When the runtime supports per-agent configuration, match the model to the work:
 
-Every worker prompt should include:
+- Use `gpt-5.6` for ambiguous or high-value architecture, cross-boundary implementation, difficult debugging, security work, and final reasoning that needs strong judgment and follow-through.
+- Use `gpt-5.6-terra` for everyday implementation, exploration, large-file scans, supporting-document review, and other bounded work that benefits from strong tool use at lower latency and cost.
+- Use `gpt-5.6-luna` for clear, repeatable, high-volume tasks with objective acceptance criteria, such as extraction, classification, mechanical transformation, or structured summaries.
 
-- Goal and success criteria for that slice.
-- Relevant repository guardrails and project instructions.
-- Assigned write scope and files or modules the worker must avoid.
-- Integration assumptions and contracts with other slices.
-- Expected verification command for the slice, if known.
-- Instruction not to revert user edits or other workers' edits.
-- Instruction to list changed files, verification run, skipped checks, risks, and open questions.
+Choose the lowest reasoning effort that meets the acceptance criteria:
 
-Prefer this shape:
+- Use `low` for straightforward mechanical work and `medium` as the normal default.
+- Use `high` for complex logic, edge cases, architect review, adversarial review, or security review.
+- Reserve `xhigh` or `max` for the hardest quality-first tasks after a lower setting proves insufficient.
+- Use Ultra only at the root when the product supports it and meaningful parallel work justifies the extra agents and tokens; do not assign it reflexively to workers.
+
+Do not pin every role to the most capable model. Keep the main integrator or critical reviewer strong, and use efficient models for well-specified supporting slices. For repeated workflows, compare representative results for correctness, completeness, evidence, latency, and token use before standardizing a model or effort.
+
+For a custom Codex agent, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. If the spawn interface cannot select a model, use a configured custom agent or inherit the parent model. Never claim a per-role model was used unless the runtime or agent configuration confirms it. Record only material overrides and their rationale in the team contract.
+
+## Worker Prompt
+
+Make each prompt outcome-focused and self-contained. State each instruction once. Include:
+
+- the slice outcome and acceptance evidence;
+- write ownership and files or modules that must not be edited;
+- repository guardrails and protected user or worker changes;
+- contracts with other slices and known dependencies;
+- relevant checks and a clear stop or escalation condition;
+- the required return shape: changed files, checks and results, skipped checks, risks, and open questions.
+
+Use this compact shape:
 
 ```text
-You are one worker in a coordinated team. Other agents may edit other scopes.
-Do not revert user changes or edits outside your ownership.
+You own one slice of a coordinated change. Other agents may edit other scopes.
+Do not revert changes outside your ownership.
 
-Goal:
+Outcome and acceptance evidence:
 ...
 
-Write ownership:
+Write ownership / do not edit:
 ...
 
-Do not edit:
+Guardrails and integration contracts:
 ...
 
-Guardrails:
+Checks and stop conditions:
 ...
 
-Expected checks:
-...
-
-Final response:
-- files changed
-- checks run and results
-- risks/open questions
+Return: changed files; checks and results; skipped checks; risks; open questions.
 ```
 
-## Role Mapping
+Do not prescribe every implementation step when the outcome and hard constraints are sufficient. Add procedural detail only for fragile operations or a known failure mode.
 
-- **Sidecar investigator:** use an `explorer` for a specific read-only question such as hidden call sites, fixture patterns, dependency direction, or CI command discovery.
-- **Implementer:** use a `worker` for one clear write scope such as a package, module, screen, migration, fixture set, or docs set.
-- **Reviewers:** use read-only prompts unless a fix-up worktree is explicitly assigned. Ask reviewers to separate findings from nice-to-have suggestions and to cite files or commands.
-- **Architect reviewer:** run before implementation for public APIs, schema/migration work, dependency changes, cross-package contracts, security boundaries, or broad behavior changes.
-- **Adversarial reviewer:** run after a meaningful integrated diff exists.
+## Role Selection
 
-Use multiple agents in parallel only when their tasks are independent. Do not assign two agents to implement the same behavior.
+- **Sidecar investigator:** answer one read-only question about call sites, dependencies, fixtures, conventions, or CI.
+- **Implementer:** own one package, module, screen, migration, command, or other disjoint write scope.
+- **Test/fixture/docs worker:** own supporting evidence after expected behavior is fixed.
+- **Architect reviewer:** evaluate public contracts, migrations, dependencies, cross-package boundaries, security boundaries, or broad behavior before implementation.
+- **Regular reviewer:** inspect the integrated diff for correctness, regressions, coverage, diagnostics, accessibility, and security.
+- **Adversarial reviewer:** challenge assumptions, degraded cases, false-green validation, accidental API changes, scope creep, and unnecessary abstraction.
+
+Ask reviewers for prioritized findings with file or command evidence. Separate actionable defects from optional suggestions.
 
 ## Worktree Policy
 
-Use explicit git worktrees when:
+Use isolated worktrees, branches, or forked workspaces when two or more agents write concurrently, when a dirty checkout needs protection, or when an experiment should be disposable. Record each path, branch, owner, and write scope.
 
-- Two or more workers will write concurrently.
-- The current checkout is dirty and integration should avoid uncommitted user work.
-- A worker needs a disposable branch for experimentation before integration.
-
-Do not require worktrees when:
-
-- The task is planning-only, review-only, or investigation-only.
-- The main agent is performing a small single-scope edit.
-- Delegation is unavailable and roles are simulated locally.
-- A reviewer is read-only.
-
-When worktrees are used:
-
-1. Create or select an integration worktree on a topic branch.
-2. Give each write-owning worker an isolated worktree, branch, or forked workspace.
-3. Record path, branch, owner, and write scope.
-4. Treat each write scope as locked until the worker returns, is redirected, or is closed.
-5. Integrate by patch, cherry-pick, merge, or manual application after reviewing the worker diff.
-6. Do not delete a worktree that may contain uncommitted work unless its changes were integrated or intentionally discarded.
+Do not require isolation for read-only agents, local role simulation, or a single small write scope. Never discard a worktree with unintegrated changes unless the user explicitly authorizes that loss.
 
 ## Integration And Review
 
-After a worker returns:
+For every returned slice:
 
-1. Read the worker's changed files and diff.
-2. Compare the diff to the team contract and repository guardrails.
-3. Reject or rewrite changes that violate ownership, architecture, generated-file rules, or user constraints.
-4. Run or schedule verification on the integrated tree, not only inside the worker workspace.
-5. Feed the integrated diff to reviewers when there is enough concrete change to inspect.
+1. Inspect its changed files, diff, checks, and risks.
+2. Compare it with the team contract, ownership, integration contracts, and repository guardrails.
+3. Reject or rewrite violations instead of silently broadening scope.
+4. Integrate by the repository-appropriate mechanism.
+5. Run affected checks on the integrated tree.
 
-Review disposition must be explicit:
-
-- `fixed`: implemented and verified or ready for verification.
-- `not adopted`: rejected with a reason grounded in goal priorities or repository evidence.
-- `blocked`: needs user, maintainer, external system, credentials, CI, or design input.
+Review only a concrete, sufficiently integrated diff. Record each actionable finding as `fixed`, `not adopted` with a reason, or `blocked` by user input or external state.
 
 ## Publication Guard
 
-Before pushing or opening a PR:
-
-- Confirm publication was requested or is expected for the task.
-- Confirm only intended changes are included.
-- Respect repository PR templates and branch naming conventions.
-- Do not push, force-push, merge, approve, resolve threads, or post with the user's identity unless explicitly asked.
-- If publishing is blocked, report the blocker and the exact local state.
+Treat commits as persistent repository mutations and pushes, PR actions, review comments, approvals, thread resolution, force-pushes, and merges as external writes. Perform only the actions the user authorized. Before publication, confirm that the diff contains only intended changes and follows repository templates and branch conventions. If blocked, report the exact local state and required next action.
