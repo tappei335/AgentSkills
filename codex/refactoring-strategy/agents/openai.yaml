@@ -1,4 +1,4 @@
 interface:
   display_name: "Refactoring Strategy"
   short_description: "Plan large refactors with evidence-based prioritization"
-  default_prompt: "Use $refactoring-strategy to survey the codebase with churn and hotspot evidence, prioritize technical debt, consult required metacognitive subagents, choose an incremental migration pattern, and produce a phased, verifiable refactoring roadmap without editing code."
+  default_prompt: "Use $refactoring-strategy to produce an evidence-based, reversible refactoring roadmap with independent subagent critique and no product-code edits."
