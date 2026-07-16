@@ -1,128 +1,75 @@
 ---
 name: maximize-research-results
-description: Improve investigation and research tasks by inferring the user's real intent, decision context, success criteria, constraints, and expected deliverable, then iterating with evidence gathering, mandatory subagent consultation, critique, and synthesis. This skill requires at least one subagent for every completed investigation; if subagents cannot be used, stop and report the blocker instead of substituting local-only review. Use when the user asks Codex to investigate, research, look into, analyze, audit, compare, diagnose, find root cause, summarize findings, or "調査して", especially when the request is broad, ambiguous, high-impact, or would benefit from structured inquiry before answering.
+description: Improve investigation and research by inferring the user's decision context, defining success and scope, gathering primary evidence, iterating through critique, and requiring at least one real subagent result before completion. Use when the user asks Codex to investigate, research, analyze, audit, compare, diagnose, find root cause, summarize findings, or "調査して", especially for broad, ambiguous, current, or high-impact questions. If subagents cannot be used, report the blocker instead of substituting local-only review.
 ---
 
 # Maximize Research Results
 
-## Overview
+## Operating Contract
 
-Turn a research request into a precise investigation brief, then iterate until the answer is useful, well-supported, and hard to improve within the task constraints. Treat investigations as iterative: gather initial evidence, consult at least one focused subagent, reconcile critique, then finalize. Do not complete an investigation, recommendation, no-findings result, or final synthesis without a subagent result. If subagent use is unavailable or prohibited, stop and report the blocker rather than substituting local-only skeptical review. Prefer moving forward with explicit assumptions over blocking on clarification unless a missing answer would materially change the investigation path.
+Turn the request into a decision-ready investigation. Inspect relevant local and external evidence without mutating the systems under study. Do not implement fixes, publish results externally, or expand scope unless the request authorizes it.
 
-## Workflow
+Infer the user's underlying decision and intended depth from context. Ask at most one concise question only when the answer would materially change the evidence path or judgment criteria; otherwise proceed with a visible assumption.
 
-### 1. Infer the Real Task
+Do not complete an investigation, recommendation, root-cause claim, or no-findings result without at least one usable real subagent result. If subagents are unavailable, prohibited, or fail without usable evidence, report the critique-gate blocker instead of substituting local self-review.
 
-Start by identifying:
+## Define The Investigation
 
-- The decision, action, or understanding the user needs after the investigation.
-- The target object: code path, PR, issue, product, incident, paper, market, person, policy, or concept.
-- The scope boundary: time range, repository area, geography, version, stakeholder, or comparison set.
-- The deliverable: concise answer, findings list, root-cause analysis, options, recommendation, implementation plan, or source-backed memo.
-- The quality bar: completeness, speed, citations, reproduction, tests, confidence level, or risk focus.
+Create a compact brief:
 
-Ask at most one concise clarification question only when the missing information would substantially change what to inspect or how to judge success. Otherwise, state the assumption and proceed.
+- **Decision:** what the user should understand or do afterward.
+- **Primary question:** the claim the investigation must resolve.
+- **Scope:** target, time range, version, repository area, stakeholders, and exclusions.
+- **Success:** required evidence, confidence, reproduction, citations, or comparison criteria.
+- **Subquestions:** the smallest set that removes material uncertainty.
+- **Stop condition:** enough evidence to answer responsibly.
+- **Failure modes:** stale sources, selection bias, hidden dependencies, confounders, and plausible alternative causes.
 
-### 2. Create an Investigation Brief
+Keep the brief internal unless exposing it helps coordinate a large task.
 
-Before deep work, form a short internal brief:
+## Gather Evidence
 
-- Primary question: the one question that must be answered.
-- Subquestions: the 2-5 supporting questions that reduce uncertainty.
-- Evidence plan: local files, tests, logs, git history, official docs, primary sources, web search, or domain references.
-- Consultation plan: which required subagent role or roles to use, what each should independently check, and what disagreement would change the answer.
-- Stop condition: what evidence is enough to answer responsibly.
-- Failure modes: likely ways the investigation could be misleading, stale, incomplete, or overfit to one source.
+Scan broadly enough to map the problem, then deepen only where evidence can change the answer:
 
-Do not expose this brief unless it helps the user understand the plan or the task is large enough to benefit from a visible plan.
+- For code, inspect structure, execution paths, callers, tests, fixtures, docs, logs, and relevant history.
+- For technical facts, prefer official documentation, specifications, source code, standards, release notes, and research papers.
+- For current, legal, financial, medical, product, pricing, schedule, or policy claims, verify against current authoritative sources.
+- Inspect user-provided artifacts directly and normalize comparison criteria before evaluating alternatives.
 
-### 3. Use Subagents for Iteration
+Record file references, source links, commands, observed outputs, dates, and concrete examples for material claims. Separate facts, inferences, assumptions, and recommendations when confusing them would change the decision.
 
-Codex delegates through collab subagents. Pick the agent type by job:
+## Subagent Critique Gate
 
-- `explorer` — read-only evidence sweeps, codebase questions, and critique-style consultations. Give it a narrow question and an expected output shape.
-- `worker` — bounded probes that must run commands, reproduce behavior, or measure something in a forked workspace.
+Launch at least one focused subagent after the first evidence direction is credible and early enough to change the investigation. Use independent, self-contained questions rather than delegating the entire answer. Continue non-overlapping evidence work while agents run.
 
-Keep review-style consultations (adversarial review, final answer review) read-only; an `explorer` with a critique prompt is usually enough. Each subagent starts cold and cannot see this conversation, so put the primary question, scope, and evidence into the prompt text.
+Give each agent the primary question, scope, evidence already found, one specific role, expected output, and failure modes to check. Require cited facts, inferences, counterevidence, confidence, and recommended next checks. Useful roles are strategy check, independent evidence check, alternative-root-cause review, adversarial critique, and draft-conclusion review.
 
-Subagent consultation is required for every invocation of this skill. Use at least one focused subagent before finalizing. Launch it as soon as a draft direction exists, not after the answer is written; a reviewer consulted only at the end rubber-stamps instead of changing the result. Do not skip subagents merely because the task is narrow, low-risk, urgent, or the direct evidence seems sufficient; for small requests, assign a compact adversarial review or final-answer review.
+Use read-only agents for research and critique. Use a write-capable worker only for a bounded reproduction or measurement in an isolated workspace when the request permits it.
 
-Use one skeptical subagent by default for broad, high-impact, ambiguous, or uncertain investigations. Add specialized subagents only when they reduce distinct uncertainty. Do not finalize until the required subagent result has been considered. If active tool policy requires explicit user permission before delegation, ask for that permission before continuing; if permission is not granted, stop with a blocker.
+Prefer automatic model selection unless quality, latency, or cost requires an override. When supported, use `gpt-5.6-terra` with medium effort for broad source or codebase sweeps; use `gpt-5.6` with high effort for root-cause reasoning, high-stakes comparison, or adversarial critique; use `gpt-5.6-luna` with low effort only for mechanical extraction, classification, deduplication, or structured summaries. Reserve `xhigh` or `max` for the hardest quality-first synthesis after a lower setting proves insufficient.
 
-Prefer these consultation roles:
+For custom Codex agents, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. Never claim an override unless the runtime or agent configuration confirms it.
 
-- Strategy check: ask whether the investigation brief targets the user's real decision and whether the evidence plan is sufficient.
-- Independent evidence check: assign a bounded subquestion, source family, code path, or comparison criterion.
-- Adversarial review: ask for counterexamples, missing assumptions, alternative root causes, and weak claims. Prompt the reviewer to default to refuting when uncertain.
-- Final answer review: ask whether the draft conclusion is supported, actionable, and missing anything material.
+Treat subagent output as evidence leads, not conclusions. Verify citations, resolve conflicts, and reconcile each material critique as adopted, rejected with reason, or unresolved with confidence impact.
 
-Every subagent prompt must include the primary question, scope boundary, evidence already found, the subagent's specific role, expected output format, and failure modes to check. Ask subagents to separate facts, inferences, and recommendations, and to cite files, commands, sources, or concrete observations for material claims.
+## Iterate To The Answer
 
-Delegate only concrete, self-contained tasks with a requested output shape. Avoid asking multiple subagents the same vague question unless independent consensus is the goal. Continue local work while subagents run. Treat subagent results as leads and critique inputs, not conclusions.
+After each evidence and critique pass:
 
-The main agent remains responsible for synthesis, verification, and final judgment. Verify cited evidence, resolve conflicts, reject unsupported claims, and update the investigation path when new evidence changes the answer.
+1. Identify the largest remaining uncertainty that could change the answer.
+2. Run one bounded check to reduce it.
+3. Resolve contradictions or expose them explicitly.
+4. Stop when another pass is unlikely to change the decision within the task constraints.
 
-If subagents are unavailable, delegation is prohibited, or a spawned subagent fails without a usable result, do not replace the required consultation with self-review. Stop with a clear blocker that says the skill requires at least one subagent result before a research answer can be completed.
+Run one critique loop by default for substantial work. Add loops only for new contradictions, missing evidence, or unresolved high-impact uncertainty. Do not treat source count or subagent agreement as proof.
 
-### 4. Gather Evidence Broad-to-Deep
+## Report
 
-Use a broad scan first, then deepen selectively:
+Lead with the result, then the evidence needed to assess it:
 
-- For codebase investigations, inspect repository structure, relevant symbols, call sites, tests, fixtures, documentation, and recent changes before concluding.
-- For technical facts, prefer primary sources: official docs, specifications, source code, release notes, standards, or research papers.
-- For current, legal, financial, medical, product, pricing, schedule, or policy information, verify with up-to-date sources before answering.
-- For user-provided artifacts, inspect the artifact directly instead of relying on memory or summaries.
-- For comparisons, normalize criteria before comparing options.
+- Findings: impact, evidence, location or source, confidence, and action.
+- Root cause: symptom, cause, mechanism, reproduction or verification, alternatives rejected, and fix direction.
+- Comparison: normalized criteria, tradeoffs, recommendation, and confidence.
+- Summary: what matters, what changed, remaining uncertainty, and next action.
 
-Record enough evidence to support the final answer with file references, source links, commands, observed outputs, or concrete examples.
-
-### 5. Iterate Until the Marginal Value Drops
-
-After the first evidence pass, compare findings against the brief and any subagent critique:
-
-- If a material subquestion remains unanswered, run another targeted evidence pass.
-- If evidence conflicts, resolve the conflict or clearly explain why it remains unresolved.
-- If a subagent identifies a plausible gap, investigate it before finalizing unless it is outside scope.
-- Reconcile each substantive critique as adopted, rejected with reason, or unresolved with confidence impact.
-- If additional work is unlikely to change the answer, stop and state the remaining uncertainty.
-
-Run one critique loop by default for substantial investigations. Run additional loops only when new contradictions, missing evidence, or unresolved high-impact uncertainty remain. Do not stop at the first plausible answer when a stronger answer is reachable with a bounded second pass.
-
-### 6. Maximize Signal
-
-Actively look for:
-
-- Counterexamples and edge cases.
-- Conflicting evidence or stale assumptions.
-- Missing tests, missing data, or hidden dependency paths.
-- Root causes instead of only symptoms.
-- Constraints that change the recommendation.
-- The smallest next action that would remove the largest remaining uncertainty.
-- Subagent agreement is not evidence by itself; verify it against primary sources, code, tests, logs, or direct artifacts.
-
-Avoid shallow completion signals such as reading one file, checking one source, or finding one plausible explanation when the user's request implies a stronger answer.
-
-### 7. Report Findings
-
-Lead with the answer, then show the evidence. Use the deliverable shape the user needs:
-
-- For findings: severity or impact first, then location/source, reasoning, and suggested action.
-- For root cause: symptom, cause, evidence, reproduction or verification, and fix direction.
-- For options: criteria, tradeoffs, recommendation, and confidence.
-- For summaries: what matters, what changed, what remains uncertain, and why.
-- For code research: include clickable file references and the commands or tests used when relevant.
-
-Explicitly separate facts, inferences, and recommendations when confusion would be costly. State uncertainty clearly, but do not dilute well-supported conclusions.
-
-## Quality Checks
-
-Before finalizing, verify:
-
-- The answer addresses the user's likely underlying goal, not only the literal wording.
-- The investigation scope and assumptions are visible if they affect the conclusion.
-- Evidence quality matches the stakes and recency requirements.
-- A focused subagent challenged the conclusion; otherwise the investigation must be reported as blocked, not completed.
-- Material critique was adopted, rejected with reason, or disclosed as unresolved with confidence impact.
-- Important alternatives or counterevidence were considered.
-- The answer still matches the requested deliverable; interesting but irrelevant findings were discarded.
-- The final response contains a concrete result, not just a process summary.
+Preserve material facts, decisions, caveats, and next steps. Omit process narration, generic reassurance, and interesting evidence that does not affect the user's decision.

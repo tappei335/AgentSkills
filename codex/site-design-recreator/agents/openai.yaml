@@ -1,4 +1,4 @@
 interface:
   display_name: "Site Design Recreator"
   short_description: "Pixel-match sites from mobile to 4K"
-  default_prompt: "Use $site-design-recreator to recreate the specified website as responsive DOM/CSS from mobile through 4K using manager review and designer sub-agent fixes until it pixel-matches."
+  default_prompt: "Use $site-design-recreator to rebuild this target as responsive DOM/CSS through a manager-led, Playwright-verified designer loop until all in-scope viewports match."

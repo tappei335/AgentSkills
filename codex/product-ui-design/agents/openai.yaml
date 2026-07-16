@@ -1,4 +1,4 @@
 interface:
   display_name: "Product UI Design"
   short_description: "Design realistic product screens with strong UX discipline"
-  default_prompt: "Use $product-ui-design to design or implement this product UI, preserve existing design-system patterns, and validate the result for states, accessibility, and maintainable visual choices."
+  default_prompt: "Use $product-ui-design to create this product UI around the user task, existing design system, complete states, accessibility, and responsive validation."

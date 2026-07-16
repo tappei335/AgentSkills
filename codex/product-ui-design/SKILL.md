@@ -1,76 +1,63 @@
 ---
 name: product-ui-design
-description: Design or implement product UI such as dashboards, settings, onboarding, internal tools, CRUD screens, data tables, forms, admin panels, and app shells. Use when the user asks Codex to build, improve, fix, restyle, or redesign an existing product screen where operational clarity matters more than marketing spectacle. Preserve existing design systems while avoiding flashy AI-demo patterns and bland default SaaS layouts. Do not trigger for landing pages, marketing sites, brand explorations, or purely backend/API work.
+description: Design or implement operational product UI such as dashboards, settings, onboarding, internal tools, CRUD screens, tables, forms, admin panels, and app shells. Use when the user asks Codex to build, improve, fix, restyle, or redesign a product screen where clarity and workflow quality matter more than marketing spectacle. Preserve existing design systems while avoiding flashy AI-demo patterns and interchangeable SaaS defaults. Do not use for landing pages, marketing sites, brand exploration, or purely backend work.
 ---
 
 # Product UI Design
 
-Create product interfaces that feel intentional and specific — not AI-demo glossy, not interchangeably bland.
+## Operating Contract
 
-## When to Use This Skill
+Create product interfaces that are specific, usable, accessible, responsive, and realistic to maintain. Preserve the existing design system and user workflows unless the request explicitly authorizes a visual or interaction reset.
 
-- Dashboard, settings page, onboarding flow, app shell, CRUD surface, or product redesign
-- The repo already has UI conventions worth preserving
-- The result should look like a real product, not a design demo
+For change requests, inspect and edit the in-scope UI and run relevant non-destructive validation without asking first. Stop before external publication, dependency expansion, destructive actions, or material product-behavior changes outside the request.
 
-## When to Use General Frontend Guidance Instead
+Read [reference.md](reference.md) for detailed state, accessibility, token, component, and visual guidance before substantial design or implementation.
 
-- Landing page, launch page, campaign site, or brand-first exploration
-- Visual experimentation matters more than operational clarity
+## Establish The Direction
 
-## Workflow
+Survey repository instructions, design tokens, shared components, layout patterns, typography, responsive conventions, and nearby screens before proposing a direction. Reuse existing primitives and semantic tokens before creating new ones.
 
-1. **Classify and survey** — choose operating mode (existing / new product / marketing). Check the repo's existing design tokens (`globals.css @theme`), component library (`components/ui/`, `components/common/`), and layout patterns before writing any code. Prefer `rg`/`rg --files` for the survey.
-2. **Write a one-line visual thesis** — e.g. `calm technical workspace with dense data hierarchy`
-3. **Lock five anchors** — typography, spacing density, color strategy, surface treatment, motion style
-4. **Identify one signature move** — the single thing a reviewer would remember
-5. **Implement around task clarity** — primary actions, navigation, state, hierarchy first. Then wire at least one keyboard shortcut for the primary action and persist filters/sort in URL searchParams (not ephemeral useState)
-6. **Validate** — after writing the file, run the bundled validator: `bash ~/.codex/skills/product-ui-design/scripts/validate.sh --output <written-file> --result /tmp/product-ui-design-validate.json`. Fix any failures it reports. The script checks: hardcoded palette colors, bg-white usage, dark: prefixes, useState-only filters, missing empty state CTAs, missing loading/error states, bare clickable divs, and icon buttons without aria-label. If the skill is being edited from this repository rather than an installed skill, run `bash codex/product-ui-design/scripts/validate.sh --output <written-file> --result /tmp/product-ui-design-validate.json`.
-7. **Check completeness** — verify: empty states have CTA buttons, every fetch has loading/error/success, destructive actions have tier-matched confirmation, every metric links to an actionable view. Then check the opposite failure: too flashy → remove decoration; too generic → strengthen signature move
+Define only the anchors needed to keep the work coherent:
 
-## Constraints
+- **Mode:** existing product UI or new product surface.
+- **Thesis:** one sentence describing hierarchy, density, tone, and product character.
+- **Anchors:** typography, spacing density, color strategy, surfaces, and motion.
+- **Signature move:** one memorable treatment that supports the product rather than competing with it.
+- **Success:** user task, states, viewports, and evidence required for acceptance.
 
-- Do not chase novelty across every layer of the interface
-- Keep one signature move; let the rest stay disciplined
-- Improve hierarchy, pacing, and typography before inventing new visual motifs
-- Treat anti-slop as a constraint, not as a reason to make the design bland
-- Preserve the repo's design system, component usage, and layout patterns
-- Keep desktop and mobile working
-- Do not introduce ornamental complexity the codebase will not maintain
+Infer these from the product and repository context. Ask only when an ambiguity would materially change workflow, information architecture, brand direction, or scope.
 
-## Output Shape
+## Implement For The Task
 
-When planning, provide:
+Build navigation, hierarchy, state, and primary actions before decoration. Keep the signature move concentrated in one layer and let the rest remain disciplined.
 
-- operating mode (existing / new product / marketing)
-- one-line visual thesis
-- signature move
-- key layout and component changes
-- main risks to avoid
+- Use semantic HTML and accessible controls; do not simulate buttons or links with bare clickable containers.
+- Handle applicable loading, empty, error, success, and destructive-action states with a recovery or next action.
+- Preserve filters, sort, pagination, and other shareable view state in the URL when the screen exposes them.
+- Add shortcuts only for frequent, discoverable actions where they improve the actual workflow.
+- Make displayed metrics and alerts lead to an actionable detail or filtered view.
+- Keep mobile and desktop behavior intentional, including focus, overflow, text wrapping, and reduced motion.
 
-Example:
+Avoid ornamental complexity, raw palette colors where semantic tokens exist, landing-page motifs inside operational screens, and new abstractions the codebase will not maintain.
 
-> **Mode:** Existing Product UI
-> **Thesis:** Dense, technical workspace — information-forward with minimal chrome
-> **Signature move:** Monospace headings with tight letter-spacing in the sidebar nav
-> **Changes:** Collapse stat cards into a single summary bar; replace card grid with a compact table view; tighten vertical spacing by 25%
-> **Risks:** Over-densifying mobile layout; losing visual breathing room in empty states
+## Model And Iteration
 
-When implementing, make changes directly and keep the result realistic to ship.
-Run relevant lint, typecheck, or test commands for behavior changes.
+Prefer automatic model selection. When explicit selection is available, use `gpt-5.6` for ambiguous, high-polish, or visually judgment-heavy work and `gpt-5.6-terra` for bounded changes inside a mature design system. Do not use `gpt-5.6-luna` for subjective visual decisions; reserve it for mechanical inventories or transformations with objective acceptance criteria.
 
-## After Implementation
+Evaluate the result against the thesis and user task. If it feels generic, strengthen product-specific hierarchy or the signature move. If it feels flashy, remove decoration. If conventions or responsive behavior broke, correct those before adding polish.
 
-If the result missed the mark, identify which of these caused it:
+## Validate
 
-- Signature move was too subtle → strengthen it
-- Signature move dominated the surface → dial it back
-- Existing conventions were broken → check repo patterns more carefully
-- Output felt generic → revisit the visual thesis
-- Mobile or responsive broke → verify breakpoints before finishing
+Run repository-native lint, typecheck, tests, and visual or interaction checks proportional to the change. For applicable source files, also run the bundled validator:
 
-Report the finding so the skill can be refined over time.
+```bash
+bash ~/.codex/skills/product-ui-design/scripts/validate.sh --output <written-file> --result /tmp/product-ui-design-validate.json
+```
 
-## Detailed Guidelines
+When editing this skill from its source repository, use `codex/product-ui-design/scripts/validate.sh`. Treat validator failures as leads: inspect applicability, fix real gaps, and explain any intentional exception.
 
-For the full design philosophy, anti-patterns, and visual guardrails, see [reference.md](reference.md).
+Before completion, verify task clarity, state coverage, accessibility, responsive behavior, destructive-action safeguards, actionable metrics, and design-system consistency.
+
+## Output
+
+For planning, report the mode, thesis, signature move, key layout or component decisions, state and responsive plan, and material risks. For implementation, lead with the user-visible result, changed files, checks, visual evidence when available, and remaining risks. Omit generic design narration.
