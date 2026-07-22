@@ -11,8 +11,8 @@ Keep the main agent accountable for the outcome, shared decisions, integration, 
 
 Prefer a more specific skill when it matches the requested outcome:
 
-- Use `$feature-implementation-strategy` for planning-only architecture, tradeoffs, roadmaps, or implementation strategy.
-- Use `$maximize-research-results` for investigation, audit, diagnosis, comparison, or broad research.
+- Use `$feature-implementation-strategy` only when planning is explicitly requested for work that crosses multiple system boundaries or contains a material, expensive-to-reverse architecture, API, data, dependency, security, migration, rollout, or architecture-changing performance decision. Do not route ordinary roadmaps, task breakdowns, local design questions, or routine implementation plans to it.
+- Use `$maximize-research-results` only for deep investigations that must reconcile multiple evidence sources or competing hypotheses, broadly verify consequential claims, or satisfy an explicit request for comprehensive or adversarial research. Do not use it as the default for routine investigation, diagnosis, or comparison.
 - Use `$github-pr-review` or a project-specific review skill for PR review.
 - Use an applicable UI or site-design skill when the change is primarily visual product work.
 

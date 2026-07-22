@@ -1,4 +1,4 @@
 interface:
   display_name: "Maximize Research Results"
-  short_description: "Require subagents for research completion"
-  default_prompt: "Use $maximize-research-results to produce a decision-ready, evidence-backed answer with at least one real subagent critique before completion."
+  short_description: "Deep research with independent critique"
+  default_prompt: "Use $maximize-research-results for a deep, decision-ready investigation with independent subagent critique."
