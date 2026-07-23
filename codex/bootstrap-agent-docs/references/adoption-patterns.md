@@ -98,4 +98,6 @@ Add that same check to an existing lightweight CI validation job. Ensure the job
 
 ## Existing Uncommitted Changes
 
-Keep the migration away from unrelated modified or untracked files. If an existing agent file is already modified, inspect the diff and treat both the base and working-tree content as user input. Do not overwrite it with generated output until the user changes have been incorporated or the user directs otherwise.
+Create or reuse a dedicated task worktree from the intended base and keep the migration away from unrelated modified or untracked files. Do not clean, move, or repurpose the user's dirty checkout to obtain a clean state. If an existing agent file is already modified, inspect the diff and treat both the base and working-tree content as user input. Do not overwrite it with generated output until the user changes have been incorporated or the user directs otherwise.
+
+Follow the repository's established branch naming convention. When no convention exists, use `<type>/<short-kebab-description>` with a meaningful type such as `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, or `ci`; avoid names that identify only the agent or temporary task runner.

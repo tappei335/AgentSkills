@@ -19,6 +19,8 @@ Deliver all of the following unless the target repository or user request narrow
 - Provide one build command and one non-mutating drift-check command.
 - Connect the drift check to the repository's existing task runner and CI when those integration points exist.
 - Preserve the meaning of existing agent instructions and avoid overwriting unmanaged files without an explicit migration step.
+- Isolate Git-backed implementation in a dedicated worktree and keep the user's primary or dirty checkout untouched.
+- Follow the repository's branch convention; when none exists, use a meaningful change-type prefix such as `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`, `test/`, or `ci/`.
 - Introduce no new coding policy unless repository evidence or the user request authorizes it.
 
 ## Inspect Before Editing
@@ -29,6 +31,19 @@ Deliver all of the following unless the target repository or user request narrow
 4. Derive project facts from authoritative repository evidence. Read [references/content-model.md](references/content-model.md) before deciding what deserves root context and what should become a triggered rule.
 5. Classify the adoption case using [references/adoption-patterns.md](references/adoption-patterns.md) when any agent file, rule directory, generator, or CI check already exists.
 6. Identify conflicts that require a user decision, such as contradictory existing policies or a requested change to an agreed architecture boundary. Do not treat ordinary content organization as a blocking decision.
+
+## Work In An Isolated Git State
+
+For a Git repository, perform file-changing work in a dedicated worktree created from the intended base. Reuse a suitable task worktree when one already exists; otherwise create one without moving, cleaning, or repurposing the user's current checkout. Keep unrelated dirty state out of the task branch.
+
+Use the repository's documented branch naming convention when it exists. Otherwise name a new branch `<type>/<short-kebab-description>` using the dominant change type:
+
+- `feat/` for user-facing or capability additions.
+- `fix/` for defect corrections.
+- `chore/` for maintenance and repository configuration.
+- `docs/`, `refactor/`, `test/`, or `ci/` when one of those scopes is more precise.
+
+Avoid generic prefixes or names that describe only the agent, ticket runner, or temporary execution context. If Git worktrees are unavailable or conflict with the repository's established workflow, state the reason and use the safest repository-approved isolation method.
 
 ## Choose The Smallest Useful Topology
 
@@ -65,8 +80,9 @@ The installed reference tool requires Python 3.8 or newer. If Python is not alre
    - `NN-name.claude.md` for CLAUDE-only content.
 4. Mirror the target directory below `ai/fragments/` for nested files. For example, `ai/fragments/packages/api/10-overview.md` generates instructions in `packages/api/`.
 5. Prefer `ai/rules/` for Claude guidance tied to languages, manifests, tests, docs, deployment files, or other concrete triggers. Do not repeat the full rule in `CLAUDE.md`. Keep equivalent guidance discoverable through nested or AGENTS-specific fragments only when non-Claude agents also need it.
-6. Treat a new behavioral constraint as a policy change. Add anti-special-case guidance, file-size or cohesion rules, test mandates, or similar coding preferences only when an existing policy, repeated repository evidence, or the user request justifies them.
-7. Keep source layout, regeneration, mirrors, and manifest maintenance in `ai/README.md` and task-runner documentation, not in root agent context.
+6. For Git repositories, add a concise shared workflow fragment that requires isolated worktrees and meaningful branch classification, adapting the exact wording and allowed prefixes to any established repository convention.
+7. Treat any other new behavioral constraint as a policy change. Add anti-special-case guidance, file-size or cohesion rules, test mandates, or similar coding preferences only when an existing policy, repeated repository evidence, or the user request justifies them.
+8. Keep source layout, regeneration, mirrors, and manifest maintenance in `ai/README.md` and task-runner documentation, not in root agent context.
 
 ## Generate Safely
 
@@ -102,8 +118,9 @@ If the source repository already generates contributor or agent docs through ano
 4. Audit every root line by asking why it must be always loaded instead of deleted, linked, nested, or triggered. Confirm generated root outputs contain no generation/source banner or self-evident maintenance prose.
 5. Confirm Claude rules cover the intended paths without duplicating their full text in `CLAUDE.md`. Confirm AGENTS can still discover any equivalent guidance it needs.
 6. Verify the effective instruction chain: account for `AGENTS.override.md`, configured fallback filenames, root and `.claude/CLAUDE.md`, nested instructions, and Claude rules. Confirm no unmanaged active file shadows or duplicates generated guidance.
-7. Run `git diff --check`, inspect `git diff --stat`, and review the complete diff. Confirm unrelated dirty files remain untouched.
-8. Run the bundled regression tests and skill validator when editing this skill itself:
+7. Confirm implementation occurred in an isolated worktree and that the branch name follows the repository convention or the fallback change-type scheme.
+8. Run `git diff --check`, inspect `git diff --stat`, and review the complete diff. Confirm unrelated dirty files remain untouched.
+9. Run the bundled regression tests and skill validator when editing this skill itself:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s <skill-dir>/tests -v

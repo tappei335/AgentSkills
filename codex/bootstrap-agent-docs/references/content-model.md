@@ -19,6 +19,7 @@ Use this reference to select the smallest set of instructions that materially im
 | Canonical commands | CI workflows, task runner, contributor guide | Non-obvious authoritative commands and working directory |
 | Architecture boundaries | Decision records, dependency manifests, module docs | Stable boundaries or dependency directions that are costly to violate |
 | Contribution constraints | CONTRIBUTING, hooks, release docs, repository policy | Exceptional branch, generation, test, or review requirements |
+| Git workflow | Contributor docs, existing branch names, worktree layout | Required isolation method and established branch classification |
 | Safety constraints | Secret policy, protected artifacts, destructive tooling | Repository-specific high-cost failure modes |
 | Path-specific behavior | Existing scoped rules, local build files, subtree docs | Concrete globs, commands, conventions, or ownership boundaries |
 
@@ -50,6 +51,7 @@ Use only fragments that pass the admission test. These numbers are conventions.
 
 | Fragment | Purpose | Typical target |
 |---|---|---|
+| `10-git-workflow.md` | Worktree isolation and meaningful branch classification | Shared |
 | `20-commands.md` | Non-obvious canonical verification commands | Shared |
 | `30-boundaries.md` | Always-on architecture or dependency constraints | Shared |
 | `40-routing.agents.md` | Compact non-Claude rule discovery, when needed | AGENTS |
@@ -103,5 +105,6 @@ Confirm all of the following:
 - AGENTS can discover required scoped guidance without loading all rule bodies globally.
 - Nested output adds only local deltas.
 - Existing policy meaning survived migration while redundant wording did not.
+- Git-backed changes use an isolated worktree, and new branch names follow the repository convention or a meaningful change-type prefix.
 - Commands and relative links work from the generated output location.
 - Every newly introduced behavioral constraint is supported by repository evidence or explicit user authorization.
