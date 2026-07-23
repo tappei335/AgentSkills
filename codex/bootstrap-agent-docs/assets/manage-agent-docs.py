@@ -345,6 +345,43 @@ def active_alternate_configs(
     return errors
 
 
+def print_conflict_alternatives(errors: Sequence[str]) -> None:
+    print("Safe alternatives:", file=sys.stderr)
+    if any(".claude/CLAUDE.md" in error for error in errors):
+        print(
+            "- Preserve .claude/CLAUDE.md as canonical and adapt the generator, "
+            "manifest, commands, and CI to write there.",
+            file=sys.stderr,
+        )
+        print(
+            "- Or migrate its retained content into fragments, generate root "
+            "CLAUDE.md, and then remove the alternate file explicitly.",
+            file=sys.stderr,
+        )
+    if any("AGENTS.override.md" in error for error in errors):
+        print(
+            "- Preserve AGENTS.override.md as canonical and adapt the managed "
+            "outputs so they do not generate a shadowed AGENTS.md at that scope.",
+            file=sys.stderr,
+        )
+        print(
+            "- Or migrate its retained content into fragments and remove the "
+            "override only after verifying the effective instruction chain.",
+            file=sys.stderr,
+        )
+    if any("unmanaged" in error or "modified managed" in error for error in errors):
+        print(
+            "- Preserve the existing file and adapt the managed output set, or "
+            "migrate its authoritative content into fragments or rules before adoption.",
+            file=sys.stderr,
+        )
+    print(
+        "Choose the option that preserves repository conventions; do not delete "
+        "a conflicting file merely to make generation pass.",
+        file=sys.stderr,
+    )
+
+
 def unmanaged_conflicts(
     root: Path,
     expected: Mapping[str, bytes],
@@ -427,15 +464,10 @@ def build(root: Path, adopt_existing: bool) -> int:
     if errors:
         for error in errors:
             print(f"[blocked] {error}", file=sys.stderr)
+        print_conflict_alternatives(errors)
         if any("active alternate instruction" in error for error in errors):
             print(
-                "Migrate the alternate instruction, then remove or rename its file. "
-                "--adopt-existing does not bypass this conflict.",
-                file=sys.stderr,
-            )
-        if not adopt_existing and any("unmanaged" in error for error in errors):
-            print(
-                "Migrate existing content, then rerun build with --adopt-existing.",
+                "--adopt-existing does not bypass alternate-instruction conflicts.",
                 file=sys.stderr,
             )
         return 1
@@ -530,10 +562,7 @@ def check(root: Path) -> int:
         for issue in issues:
             print(f"[stale] {issue}", file=sys.stderr)
         if alternate_issues:
-            print(
-                "Migrate the alternate instruction, then remove or rename its file.",
-                file=sys.stderr,
-            )
+            print_conflict_alternatives(alternate_issues)
         if len(issues) > len(alternate_issues):
             print(
                 "Run 'python3 ai/manage-agent-docs.py build' to regenerate.",

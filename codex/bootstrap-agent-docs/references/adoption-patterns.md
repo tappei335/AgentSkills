@@ -44,7 +44,7 @@ Inventory the effective instruction chain, not only the preferred output names:
 - Codex checks `AGENTS.override.md` before `AGENTS.md` in each scope and may use names from `project_doc_fallback_filenames` when neither standard file is present.
 - Claude accepts project instructions at either `CLAUDE.md` or `.claude/CLAUDE.md`; `CLAUDE.local.md` may add uncommitted local guidance.
 
-Record every checked-in alternate file in the migration ledger. Move retained shared policy into fragments or rules, then remove or rename the alternate file explicitly so it cannot shadow or duplicate generated guidance. Do not use `--adopt-existing` to bypass an alternate-file conflict. Treat personal `CLAUDE.local.md` as user context: do not manage or delete it, but report material conflicts that affect verification.
+Record every checked-in alternate file in the migration ledger. When a managed output would conflict, present both safe directions: preserve the established alternate as canonical and adapt the generator or managed output set, or migrate retained policy into fragments or rules and remove the alternate only after verifying the effective chain. Recommend a direction from repository conventions rather than treating the reference topology as mandatory. Do not use `--adopt-existing` to bypass an alternate-file conflict. Treat personal `CLAUDE.local.md` as user context: do not manage or delete it, but report material conflicts that affect verification.
 
 When effective Codex fallback names cannot be resolved from the available configuration, state that verification gap. Prefer an available instruction-inspection command from the target agent over guessing which file is active.
 

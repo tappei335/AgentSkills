@@ -66,7 +66,7 @@ python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root> --dry-run
 python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root>
 ```
 
-The scaffolder installs the reference generator and its source-layout documentation without replacing different existing files. If it reports a conflict, inspect and integrate the asset manually; do not bypass the conflict by deleting user files.
+The scaffolder installs the reference generator and its source-layout documentation without replacing different existing files or claiming an existing repository-owned `ai/` directory. If it reports a conflict, present viable alternatives and recommend one from repository evidence instead of stopping at the error. Typical options are to port the tooling consistently to an unused root such as `.agent-docs/` or `tools/agent-docs/`, extend an existing generator, or keep the current topology and integrate the assets manually. Do not bypass a conflict by deleting user files.
 
 The installed reference tool requires Python 3.8 or newer. If Python is not already available in local development and CI, port the behavior described in the installed `ai/README.md` to the repository's existing runtime instead of introducing an unapproved toolchain dependency.
 
@@ -94,7 +94,7 @@ python3 ai/manage-agent-docs.py build
 python3 ai/manage-agent-docs.py check
 ```
 
-The first check is expected to fail during initial adoption and exposes the pending output. The build refuses to replace unmanaged outputs, modified managed outputs, or outputs shadowed by `AGENTS.override.md` or an alternate `.claude/CLAUDE.md`. Migrate active alternate instructions into the source model and remove the conflicting file explicitly. After migrating and reviewing an unmanaged output, use the one-time adoption flag:
+The first check is expected to fail during initial adoption and exposes the pending output. The build refuses to replace unmanaged outputs, modified managed outputs, or outputs shadowed by `AGENTS.override.md` or an alternate `.claude/CLAUDE.md`. For every conflict, explain the competing canonical layouts, their tradeoffs, and a repository-evidenced recommendation. Preserve an established alternate as canonical by adapting the generator and managed output set, or migrate its retained content into the source model and remove it only after verifying the effective instruction chain. After migrating and reviewing an unmanaged output, use the one-time adoption flag:
 
 ```sh
 python3 ai/manage-agent-docs.py build --adopt-existing
@@ -139,3 +139,4 @@ Report the source layout, generated outputs, workflow/CI integration, commands a
 - Do not make path rules and nested instructions contradict each other.
 - Do not add nested files to every directory. Excess context is a maintenance cost.
 - Do not inject generic coding preferences merely because they are broadly useful. Require repository evidence or explicit user authorization for new behavioral policy.
+- Do not report a topology conflict without at least one safe alternative. Prefer preserving established repository-owned paths and explain every required migration before changing or removing them.

@@ -92,6 +92,13 @@ class ManageAgentDocsTests(unittest.TestCase):
         for result in (checked, built):
             self.assertIn("AGENTS.override.md", result.stderr)
             self.assertIn(".claude/CLAUDE.md", result.stderr)
+            self.assertIn("Safe alternatives:", result.stderr)
+            self.assertIn(
+                "Preserve .claude/CLAUDE.md as canonical", result.stderr
+            )
+            self.assertIn(
+                "Preserve AGENTS.override.md as canonical", result.stderr
+            )
 
     def test_generated_root_and_dot_claude_documents_are_rejected(self) -> None:
         self.write_root_fragment("# Rules\n\n- shared\n")
@@ -107,6 +114,57 @@ class ManageAgentDocsTests(unittest.TestCase):
         self.assertEqual(built.returncode, 1)
         self.assertIn(".claude/CLAUDE.md", built.stderr)
         self.assertFalse((self.repo / "AGENTS.md").exists())
+
+
+class ScaffoldAgentDocsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.repo = Path(self.temporary.name) / "repo"
+        self.repo.mkdir()
+
+    def run_scaffolder(
+        self, *extra_arguments: str
+    ) -> subprocess.CompletedProcess:
+        environment = os.environ.copy()
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
+        return subprocess.run(
+            [
+                "python3",
+                str(SCAFFOLDER),
+                "--repo",
+                str(self.repo),
+                *extra_arguments,
+            ],
+            cwd=SKILL_ROOT,
+            env=environment,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+    def test_existing_ai_namespace_reports_safe_alternatives(self) -> None:
+        namespace = self.repo / "ai"
+        namespace.mkdir()
+        (namespace / "__init__.py").write_text("", encoding="utf-8")
+
+        result = self.run_scaffolder()
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("ai/ is already repository-owned", result.stderr)
+        self.assertIn("Safe alternatives:", result.stderr)
+        self.assertIn(".agent-docs/", result.stderr)
+        self.assertIn("tools/agent-docs/", result.stderr)
+        self.assertFalse((namespace / "manage-agent-docs.py").exists())
+
+    def test_installed_scaffold_is_not_reported_as_namespace_conflict(self) -> None:
+        installed = self.run_scaffolder()
+        checked = self.run_scaffolder("--check")
+
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+        self.assertNotIn("repository-owned", checked.stderr)
 
 
 if __name__ == "__main__":

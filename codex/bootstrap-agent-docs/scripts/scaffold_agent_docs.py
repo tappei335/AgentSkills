@@ -18,6 +18,11 @@ ASSETS: Tuple[Tuple[Path, Path], ...] = (
     (SKILL_ROOT / "assets/AI-README.md", Path("ai/README.md")),
 )
 SOURCE_DIRECTORIES = (Path("ai/fragments"), Path("ai/rules"))
+ALTERNATE_ROOTS = (
+    Path(".agent-docs"),
+    Path("tools/agent-docs"),
+    Path("docs/agent-docs"),
+)
 
 
 class ScaffoldError(Exception):
@@ -81,6 +86,50 @@ def inspect_targets(root: Path) -> Dict[Path, str]:
     return statuses
 
 
+def existing_ai_namespace_conflicts(root: Path) -> bool:
+    namespace = root / "ai"
+    if not namespace.is_dir():
+        return False
+    if not any(namespace.iterdir()):
+        return False
+    for source, relative in ASSETS:
+        target = root / relative
+        if target.is_file() and target.read_bytes() == source.read_bytes():
+            return False
+    return True
+
+
+def print_alternate_locations(root: Path) -> None:
+    available = [
+        path.as_posix() + "/"
+        for path in ALTERNATE_ROOTS
+        if not (root / path).exists()
+    ]
+    print("Safe alternatives:", file=sys.stderr)
+    if available:
+        print(
+            "- Preserve the existing ai/ directory and port the bundled tooling to "
+            + " or ".join(available[:2])
+            + ".",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "- Preserve the existing ai/ directory and choose another "
+            "repository-approved maintenance root.",
+            file=sys.stderr,
+        )
+    print(
+        "- Extend an existing documentation generator instead of installing this one.",
+        file=sys.stderr,
+    )
+    print(
+        "Whichever option is chosen, update source paths, manifest location, "
+        "commands, and CI together.",
+        file=sys.stderr,
+    )
+
+
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -103,6 +152,7 @@ def main(argv: Sequence[str] = tuple(sys.argv[1:])) -> int:
         if not root.is_dir():
             raise ScaffoldError(f"repository root is not a directory: {root}")
         statuses = inspect_targets(root)
+        namespace_conflict = existing_ai_namespace_conflicts(root)
     except (OSError, ScaffoldError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
@@ -111,14 +161,17 @@ def main(argv: Sequence[str] = tuple(sys.argv[1:])) -> int:
         statuses.items(), key=lambda item: item[0].as_posix()
     ):
         print(f"[{status_value}] {relative.as_posix()}")
+    if namespace_conflict:
+        print("[conflict] ai/ is already repository-owned", file=sys.stderr)
 
     conflicts = [path for path, value in statuses.items() if value == "conflict"]
-    if conflicts:
+    if conflicts or namespace_conflict:
         print(
-            "Refusing to overwrite existing files. "
-            "Inspect and integrate each conflict manually.",
+            "Refusing to overwrite existing files or claim an existing namespace. "
+            "Inspect each conflict before choosing a topology.",
             file=sys.stderr,
         )
+        print_alternate_locations(root)
         return 1
 
     if args.check:
@@ -137,9 +190,6 @@ def main(argv: Sequence[str] = tuple(sys.argv[1:])) -> int:
         return 0
 
     try:
-        for relative, status_value in statuses.items():
-            if status_value == "create-directory":
-                (root / relative).mkdir(parents=True, exist_ok=False)
         for source, relative in ASSETS:
             if statuses[relative] != "create":
                 continue
@@ -152,6 +202,9 @@ def main(argv: Sequence[str] = tuple(sys.argv[1:])) -> int:
                     | stat.S_IXGRP
                     | stat.S_IXOTH
                 )
+        for relative, status_value in statuses.items():
+            if status_value == "create-directory":
+                (root / relative).mkdir(parents=True, exist_ok=False)
     except OSError as error:
         print(f"error: could not install scaffold: {error}", file=sys.stderr)
         return 2
