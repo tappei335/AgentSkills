@@ -1,4 +1,4 @@
 interface:
   display_name: "Feature Strategy"
-  short_description: "Plan large implementations by optimizing goal tradeoffs"
-  default_prompt: "Use $feature-implementation-strategy to compare evidence-based implementation approaches and produce an executable strategy with independent subagent critique before code changes."
+  short_description: "Plan consequential cross-system features"
+  default_prompt: "Use $feature-implementation-strategy to plan a consequential cross-system feature and critique the strategy before code changes."

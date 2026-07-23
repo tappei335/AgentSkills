@@ -1,6 +1,18 @@
 ---
 name: feature-implementation-strategy
-description: Plan large or consequential feature implementations before code changes by defining the outcome and ranked value priorities, mapping system impact, comparing candidate strategies, and requiring real subagent critique. Use when the user requests an implementation strategy, design approach, architecture plan, roadmap, task breakdown, performance or memory plan, rollout or migration plan, risk review, "機能実装に向けた戦略検討", "実装方針", or "設計方針" before substantial implementation work.
+description: >
+  Plan large or consequential feature implementations before code changes by
+  mapping system impact, comparing viable strategies, defining execution slices,
+  and requiring real subagent critique. Use only when the user explicitly requests
+  planning or strategy before coding and at least one of these applies: the work
+  crosses multiple system boundaries; it requires a material, expensive-to-reverse
+  decision about architecture, public APIs, data shape, dependencies, security,
+  migration, or rollout; or it has a hard performance or memory constraint that
+  materially changes the architecture. Do not trigger solely from generic requests
+  for an implementation plan, design approach, roadmap, task breakdown, tradeoff
+  analysis, risk review, "実装方針", or "設計方針". Do not use for small or local
+  changes, routine implementation, or a single bounded design question whose
+  implementation path is already clear.
 ---
 
 # Feature Implementation Strategy

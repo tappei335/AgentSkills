@@ -1,6 +1,6 @@
 ---
 name: maximize-research-results
-description: Improve investigation and research by inferring the user's decision context, defining success and scope, gathering primary evidence, iterating through critique, and requiring at least one real subagent result before completion. Use when the user asks Codex to investigate, research, analyze, audit, compare, diagnose, find root cause, summarize findings, or "調査して", especially for broad, ambiguous, current, or high-impact questions. If subagents cannot be used, report the blocker instead of substituting local-only review.
+description: Conduct deep, decision-ready investigations by scoping the question, gathering primary evidence, reconciling competing explanations, and requiring independent subagent critique. Use only when multiple sources, artifacts, or plausible hypotheses must be reconciled; a consequential claim needs broad authoritative verification; or the user explicitly requests deep, comprehensive, or adversarial research. Do not trigger solely from generic requests to investigate, research, analyze, audit, compare, diagnose, find root cause, summarize, or "調査して". Do not use for focused lookups, simple explanations or summaries, routine bug inspection, implementation, PR review, or comparisons answerable through one bounded evidence path. A usable real subagent result is required before completion; if unavailable, report the blocker.
 ---
 
 # Maximize Research Results
