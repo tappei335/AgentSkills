@@ -8,6 +8,7 @@ import difflib
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -15,8 +16,10 @@ from pathlib import Path, PurePosixPath
 from typing import Dict, List, Mapping, Sequence, Tuple
 
 
-MANIFEST_RELATIVE_PATH = "ai/.agent-docs-manifest.json"
+LAYOUT_FILENAME = ".agent-docs-layout.json"
+LAYOUT_VERSION = 1
 MANIFEST_VERSION = 1
+SAFE_PATH_COMPONENT = re.compile(r"[A-Za-z0-9._][A-Za-z0-9._-]*\Z")
 
 
 class AgentDocsError(Exception):
@@ -29,19 +32,131 @@ class ManagedState:
     claude_rules: Dict[str, str]
 
 
+@dataclass(frozen=True)
+class RepositoryLayout:
+    root: Path
+    agent_docs_dir: PurePosixPath
+
+    @property
+    def source_root(self) -> Path:
+        return self.root.joinpath(*self.agent_docs_dir.parts)
+
+    @property
+    def fragments_root(self) -> Path:
+        return self.source_root / "fragments"
+
+    @property
+    def rules_root(self) -> Path:
+        return self.source_root / "rules"
+
+    @property
+    def manifest_relative_path(self) -> str:
+        return (self.agent_docs_dir / ".agent-docs-manifest.json").as_posix()
+
+    @property
+    def manager_relative_path(self) -> str:
+        return (self.agent_docs_dir / "manage-agent-docs.py").as_posix()
+
+
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def ensure_within_root(root: Path, path: Path, label: str) -> Path:
+def parse_agent_docs_dir(value: object) -> PurePosixPath:
+    if not isinstance(value, str):
+        raise AgentDocsError("layout field 'agent_docs_dir' must be a string")
+    if "\\" in value:
+        raise AgentDocsError(
+            f"agent documentation directory contains a backslash: {value!r}"
+        )
+    relative = PurePosixPath(value)
+    if (
+        relative.is_absolute()
+        or not relative.parts
+        or ".." in relative.parts
+        or relative.as_posix() != value
+    ):
+        raise AgentDocsError(
+            f"unsafe agent documentation directory: {value!r}"
+        )
+    if relative.parts[0] in {".git", ".claude"}:
+        raise AgentDocsError(
+            "agent documentation directory cannot be inside "
+            f"{relative.parts[0]}/: {value!r}"
+        )
+    if any(not SAFE_PATH_COMPONENT.fullmatch(part) for part in relative.parts):
+        raise AgentDocsError(
+            "agent documentation directory contains unsupported "
+            f"characters: {value!r}"
+        )
+    if relative.name in {"AGENTS.md", "CLAUDE.md"}:
+        raise AgentDocsError(
+            "agent documentation directory conflicts with a generated "
+            f"document name: {value!r}"
+        )
+    return relative
+
+
+def load_repository_layout(
+    manager_path: Path, invocation_root: Path
+) -> RepositoryLayout:
+    source_root = manager_path.resolve(strict=True).parent
+    config_path = source_root / LAYOUT_FILENAME
+    if not config_path.exists():
+        if source_root.name != "ai":
+            raise AgentDocsError(
+                f"layout config is missing: {config_path}"
+            )
+        return RepositoryLayout(
+            source_root.parent.resolve(strict=True), PurePosixPath("ai")
+        )
+    if not config_path.is_file():
+        raise AgentDocsError(f"layout config is not a file: {config_path}")
     try:
-        path.resolve(strict=False).relative_to(root.resolve(strict=True))
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise AgentDocsError(f"cannot read {config_path}: {error}") from error
+    if not isinstance(payload, dict) or payload.get("version") != LAYOUT_VERSION:
+        raise AgentDocsError(
+            f"{config_path} must use layout version {LAYOUT_VERSION}"
+        )
+    agent_docs_dir = parse_agent_docs_dir(payload.get("agent_docs_dir"))
+    root = invocation_root.resolve(strict=True)
+    if not root.is_dir():
+        raise AgentDocsError(
+            f"repository root is not a directory: {root}"
+        )
+    git_root = next(
+        (
+            candidate
+            for candidate in (source_root, *source_root.parents)
+            if (candidate / ".git").exists()
+        ),
+        None,
+    )
+    if git_root is not None and root != git_root:
+        raise AgentDocsError(
+            f"run the command from the Git repository root: {git_root}"
+        )
+    expected_source = root.joinpath(*agent_docs_dir.parts).resolve(strict=False)
+    if expected_source != source_root:
+        raise AgentDocsError(
+            "layout config does not match the manager path from the current "
+            f"repository root: {config_path}. Run the command from the "
+            "repository root."
+        )
+    return RepositoryLayout(root, agent_docs_dir)
+
+
+def ensure_within_root(layout: RepositoryLayout, path: Path, label: str) -> Path:
+    try:
+        path.resolve(strict=False).relative_to(layout.root.resolve(strict=True))
     except (OSError, ValueError) as error:
         raise AgentDocsError(f"{label} escapes the repository: {path}") from error
     return path
 
 
-def repo_path(root: Path, relative: str, section: str) -> Path:
+def repo_path(layout: RepositoryLayout, relative: str, section: str) -> Path:
     if "\\" in relative:
         raise AgentDocsError(
             f"invalid {section} manifest path with a backslash: {relative!r}"
@@ -53,23 +168,32 @@ def repo_path(root: Path, relative: str, section: str) -> Path:
         raise AgentDocsError(f"non-canonical {section} manifest path: {relative!r}")
     if section == "documents" and pure.name not in {"AGENTS.md", "CLAUDE.md"}:
         raise AgentDocsError(f"invalid managed document path: {relative!r}")
-    if section == "documents" and (
-        pure.parts[0] == ".git"
-        or pure.parts[:2] in {
+    if section == "documents":
+        forbidden_prefixes = (
+            (".git",),
             (".claude", "rules"),
-            ("ai", "fragments"),
-            ("ai", "rules"),
-        }
-    ):
-        raise AgentDocsError(f"forbidden managed document path: {relative!r}")
+            (*layout.agent_docs_dir.parts, "fragments"),
+            (*layout.agent_docs_dir.parts, "rules"),
+        )
+        if any(
+            pure.parts[: len(prefix)] == prefix
+            for prefix in forbidden_prefixes
+        ):
+            raise AgentDocsError(
+                f"forbidden managed document path: {relative!r}"
+            )
     if section == "claude_rules" and pure.parts[:2] != (".claude", "rules"):
         raise AgentDocsError(f"invalid managed Claude rule path: {relative!r}")
     return ensure_within_root(
-        root, root.joinpath(*pure.parts), f"managed {section} path"
+        layout,
+        layout.root.joinpath(*pure.parts),
+        f"managed {section} path",
     )
 
 
-def validate_hash_map(value: object, section: str, root: Path) -> Dict[str, str]:
+def validate_hash_map(
+    value: object, section: str, layout: RepositoryLayout
+) -> Dict[str, str]:
     if not isinstance(value, dict):
         raise AgentDocsError(f"manifest field {section!r} must be an object")
     result: Dict[str, str] = {}
@@ -78,7 +202,7 @@ def validate_hash_map(value: object, section: str, root: Path) -> Dict[str, str]
             raise AgentDocsError(
                 f"manifest field {section!r} must map paths to SHA-256 strings"
             )
-        repo_path(root, relative, section)
+        repo_path(layout, relative, section)
         if len(digest) != 64 or any(
             char not in "0123456789abcdef" for char in digest
         ):
@@ -89,9 +213,11 @@ def validate_hash_map(value: object, section: str, root: Path) -> Dict[str, str]
     return result
 
 
-def load_manifest(root: Path) -> Tuple[ManagedState, bool]:
+def load_manifest(layout: RepositoryLayout) -> Tuple[ManagedState, bool]:
     manifest_path = ensure_within_root(
-        root, root / MANIFEST_RELATIVE_PATH, "manifest path"
+        layout,
+        layout.root / layout.manifest_relative_path,
+        "manifest path",
     )
     if not manifest_path.exists():
         return ManagedState({}, {}), False
@@ -105,8 +231,12 @@ def load_manifest(root: Path) -> Tuple[ManagedState, bool]:
         raise AgentDocsError(
             f"{manifest_path} must use manifest version {MANIFEST_VERSION}"
         )
-    documents = validate_hash_map(payload.get("documents"), "documents", root)
-    rules = validate_hash_map(payload.get("claude_rules"), "claude_rules", root)
+    documents = validate_hash_map(
+        payload.get("documents"), "documents", layout
+    )
+    rules = validate_hash_map(
+        payload.get("claude_rules"), "claude_rules", layout
+    )
     return ManagedState(documents, rules), True
 
 
@@ -140,9 +270,9 @@ def render_document(title: str, fragments: Sequence[Path]) -> bytes:
     return ("\n".join(sections) + "\n").encode("utf-8")
 
 
-def discover_documents(root: Path) -> Dict[str, bytes]:
+def discover_documents(layout: RepositoryLayout) -> Dict[str, bytes]:
     fragments_root = ensure_within_root(
-        root, root / "ai/fragments", "fragment source directory"
+        layout, layout.fragments_root, "fragment source directory"
     )
     if not fragments_root.is_dir():
         raise AgentDocsError(f"fragment directory does not exist: {fragments_root}")
@@ -153,7 +283,7 @@ def discover_documents(root: Path) -> Dict[str, bytes]:
         key=lambda path: path.relative_to(fragments_root).as_posix(),
     )
     for fragment in candidates:
-        ensure_within_root(root, fragment, "fragment source")
+        ensure_within_root(layout, fragment, "fragment source")
         relative_parent = fragment.parent.relative_to(fragments_root)
         relative = PurePosixPath(relative_parent.as_posix())
         groups.setdefault(relative, []).append(fragment)
@@ -169,14 +299,15 @@ def discover_documents(root: Path) -> Dict[str, bytes]:
         groups.items(), key=lambda item: item[0].as_posix()
     ):
         output_dir = (
-            root
+            layout.root
             if relative_dir == root_key
-            else root.joinpath(*relative_dir.parts)
+            else layout.root.joinpath(*relative_dir.parts)
         )
         if not output_dir.is_dir():
             raise AgentDocsError(
                 "fragment directory has no matching repository directory: "
-                f"ai/fragments/{relative_dir.as_posix()}"
+                f"{layout.agent_docs_dir.as_posix()}/fragments/"
+                f"{relative_dir.as_posix()}"
             )
         for target, filename in (("agents", "AGENTS.md"), ("claude", "CLAUDE.md")):
             selected = [
@@ -191,13 +322,15 @@ def discover_documents(root: Path) -> Dict[str, bytes]:
                     )
                 continue
             output_path = output_dir / filename
-            relative_output = output_path.relative_to(root).as_posix()
+            relative_output = output_path.relative_to(layout.root).as_posix()
             outputs[relative_output] = render_document(filename, selected)
     return outputs
 
 
-def discover_claude_rules(root: Path) -> Dict[str, bytes]:
-    rules_root = ensure_within_root(root, root / "ai/rules", "rule source directory")
+def discover_claude_rules(layout: RepositoryLayout) -> Dict[str, bytes]:
+    rules_root = ensure_within_root(
+        layout, layout.rules_root, "rule source directory"
+    )
     if not rules_root.exists():
         return {}
     if not rules_root.is_dir():
@@ -208,7 +341,7 @@ def discover_claude_rules(root: Path) -> Dict[str, bytes]:
         (path for path in rules_root.rglob("*.md") if path.is_file()),
         key=lambda path: path.relative_to(rules_root).as_posix(),
     ):
-        ensure_within_root(root, source, "rule source")
+        ensure_within_root(layout, source, "rule source")
         try:
             data = source.read_bytes()
             data.decode("utf-8")
@@ -277,7 +410,7 @@ def atomic_write(path: Path, data: bytes) -> None:
 
 
 def stale_removed_paths(
-    root: Path,
+    layout: RepositoryLayout,
     previous: Mapping[str, str],
     expected: Mapping[str, bytes],
     section: str,
@@ -286,7 +419,7 @@ def stale_removed_paths(
     for relative, old_digest in previous.items():
         if relative in expected:
             continue
-        path = repo_path(root, relative, section)
+        path = repo_path(layout, relative, section)
         if path.exists() and sha256(read_existing(path)) != old_digest:
             errors.append(
                 f"refusing to remove modified obsolete managed file: {relative}"
@@ -295,14 +428,14 @@ def stale_removed_paths(
 
 
 def modified_managed_paths(
-    root: Path,
+    layout: RepositoryLayout,
     previous: Mapping[str, str],
     expected: Mapping[str, bytes],
     section: str,
 ) -> List[str]:
     errors: List[str] = []
     for relative in sorted(set(previous) & set(expected)):
-        path = repo_path(root, relative, section)
+        path = repo_path(layout, relative, section)
         if not path.exists():
             continue
         actual = read_existing(path)
@@ -323,7 +456,7 @@ def alternate_instruction_paths(relative: str) -> Tuple[str, ...]:
 
 
 def active_alternate_configs(
-    root: Path, documents: Mapping[str, bytes]
+    layout: RepositoryLayout, documents: Mapping[str, bytes]
 ) -> List[str]:
     errors: List[str] = []
     seen = set()
@@ -333,8 +466,8 @@ def active_alternate_configs(
                 continue
             seen.add(alternate)
             path = ensure_within_root(
-                root,
-                root.joinpath(*PurePosixPath(alternate).parts),
+                layout,
+                layout.root.joinpath(*PurePosixPath(alternate).parts),
                 "alternate instruction path",
             )
             if alternate in documents or path.exists():
@@ -372,7 +505,8 @@ def print_conflict_alternatives(errors: Sequence[str]) -> None:
     if any("unmanaged" in error or "modified managed" in error for error in errors):
         print(
             "- Preserve the existing file and adapt the managed output set, or "
-            "migrate its authoritative content into fragments or rules before adoption.",
+            "migrate its authoritative content into fragments or rules before "
+            "adoption.",
             file=sys.stderr,
         )
     print(
@@ -383,7 +517,7 @@ def print_conflict_alternatives(errors: Sequence[str]) -> None:
 
 
 def unmanaged_conflicts(
-    root: Path,
+    layout: RepositoryLayout,
     expected: Mapping[str, bytes],
     previous: Mapping[str, str],
     section: str,
@@ -393,7 +527,7 @@ def unmanaged_conflicts(
         return []
     errors: List[str] = []
     for relative, expected_data in expected.items():
-        path = repo_path(root, relative, section)
+        path = repo_path(layout, relative, section)
         if not path.exists() or relative in previous:
             continue
         actual = read_existing(path)
@@ -405,19 +539,19 @@ def unmanaged_conflicts(
 
 
 def remove_obsolete(
-    root: Path,
+    layout: RepositoryLayout,
     previous: Mapping[str, str],
     expected: Mapping[str, bytes],
     section: str,
 ) -> None:
     for relative in sorted(set(previous) - set(expected), reverse=True):
-        path = repo_path(root, relative, section)
+        path = repo_path(layout, relative, section)
         if not path.exists():
             continue
         path.unlink()
         print(f"removed {relative}")
         if section == "claude_rules":
-            rules_root = root / ".claude/rules"
+            rules_root = layout.root / ".claude/rules"
             parent = path.parent
             while parent != rules_root and rules_root in parent.parents:
                 try:
@@ -427,38 +561,50 @@ def remove_obsolete(
                 parent = parent.parent
 
 
-def build(root: Path, adopt_existing: bool) -> int:
-    documents = discover_documents(root)
-    rules = discover_claude_rules(root)
+def build(layout: RepositoryLayout, adopt_existing: bool) -> int:
+    documents = discover_documents(layout)
+    rules = discover_claude_rules(layout)
     reject_output_collisions(documents, rules)
-    previous, _ = load_manifest(root)
+    previous, _ = load_manifest(layout)
 
     errors: List[str] = []
-    errors.extend(active_alternate_configs(root, documents))
+    errors.extend(active_alternate_configs(layout, documents))
     errors.extend(
         unmanaged_conflicts(
-            root, documents, previous.documents, "documents", adopt_existing
+            layout,
+            documents,
+            previous.documents,
+            "documents",
+            adopt_existing,
         )
     )
     errors.extend(
         unmanaged_conflicts(
-            root, rules, previous.claude_rules, "claude_rules", adopt_existing
+            layout,
+            rules,
+            previous.claude_rules,
+            "claude_rules",
+            adopt_existing,
         )
     )
     errors.extend(
-        stale_removed_paths(root, previous.documents, documents, "documents")
+        stale_removed_paths(
+            layout, previous.documents, documents, "documents"
+        )
     )
     errors.extend(
-        stale_removed_paths(root, previous.claude_rules, rules, "claude_rules")
+        stale_removed_paths(
+            layout, previous.claude_rules, rules, "claude_rules"
+        )
     )
     errors.extend(
         modified_managed_paths(
-            root, previous.documents, documents, "documents"
+            layout, previous.documents, documents, "documents"
         )
     )
     errors.extend(
         modified_managed_paths(
-            root, previous.claude_rules, rules, "claude_rules"
+            layout, previous.claude_rules, rules, "claude_rules"
         )
     )
     if errors:
@@ -472,24 +618,26 @@ def build(root: Path, adopt_existing: bool) -> int:
             )
         return 1
 
-    remove_obsolete(root, previous.documents, documents, "documents")
-    remove_obsolete(root, previous.claude_rules, rules, "claude_rules")
+    remove_obsolete(layout, previous.documents, documents, "documents")
+    remove_obsolete(layout, previous.claude_rules, rules, "claude_rules")
 
     for relative, data in sorted(documents.items()):
-        path = repo_path(root, relative, "documents")
+        path = repo_path(layout, relative, "documents")
         atomic_write(path, data)
         print(f"wrote {relative}")
     for relative, data in sorted(rules.items()):
-        path = repo_path(root, relative, "claude_rules")
+        path = repo_path(layout, relative, "claude_rules")
         atomic_write(path, data)
         print(f"wrote {relative}")
 
     state = expected_state(documents, rules)
     manifest_path = ensure_within_root(
-        root, root / MANIFEST_RELATIVE_PATH, "manifest path"
+        layout,
+        layout.root / layout.manifest_relative_path,
+        "manifest path",
     )
     atomic_write(manifest_path, manifest_bytes(state))
-    print(f"wrote {MANIFEST_RELATIVE_PATH}")
+    print(f"wrote {layout.manifest_relative_path}")
     return 0
 
 
@@ -515,11 +663,14 @@ def print_diff(relative: str, actual: bytes, expected: bytes) -> None:
 
 
 def check_outputs(
-    root: Path, expected: Mapping[str, bytes], label: str, section: str
+    layout: RepositoryLayout,
+    expected: Mapping[str, bytes],
+    label: str,
+    section: str,
 ) -> List[str]:
     issues: List[str] = []
     for relative, expected_data in sorted(expected.items()):
-        path = repo_path(root, relative, section)
+        path = repo_path(layout, relative, section)
         if not path.exists():
             issues.append(f"missing {label}: {relative}")
             continue
@@ -530,32 +681,40 @@ def check_outputs(
     return issues
 
 
-def check(root: Path) -> int:
-    documents = discover_documents(root)
-    rules = discover_claude_rules(root)
+def check(layout: RepositoryLayout) -> int:
+    documents = discover_documents(layout)
+    rules = discover_claude_rules(layout)
     reject_output_collisions(documents, rules)
     expected = expected_state(documents, rules)
-    previous, manifest_exists = load_manifest(root)
+    previous, manifest_exists = load_manifest(layout)
 
-    alternate_issues = active_alternate_configs(root, documents)
+    alternate_issues = active_alternate_configs(layout, documents)
     issues: List[str] = []
     issues.extend(alternate_issues)
-    issues.extend(check_outputs(root, documents, "document", "documents"))
-    issues.extend(check_outputs(root, rules, "Claude rule", "claude_rules"))
+    issues.extend(
+        check_outputs(layout, documents, "document", "documents")
+    )
+    issues.extend(
+        check_outputs(layout, rules, "Claude rule", "claude_rules")
+    )
     if not manifest_exists:
-        issues.append(f"missing manifest: {MANIFEST_RELATIVE_PATH}")
+        issues.append(f"missing manifest: {layout.manifest_relative_path}")
     else:
         manifest_path = ensure_within_root(
-            root, root / MANIFEST_RELATIVE_PATH, "manifest path"
+            layout,
+            layout.root / layout.manifest_relative_path,
+            "manifest path",
         )
         if read_existing(manifest_path) != manifest_bytes(expected):
-            issues.append(f"stale manifest: {MANIFEST_RELATIVE_PATH}")
+            issues.append(
+                f"stale manifest: {layout.manifest_relative_path}"
+            )
 
     for relative in sorted(set(previous.documents) - set(documents)):
-        if repo_path(root, relative, "documents").exists():
+        if repo_path(layout, relative, "documents").exists():
             issues.append(f"obsolete managed document: {relative}")
     for relative in sorted(set(previous.claude_rules) - set(rules)):
-        if repo_path(root, relative, "claude_rules").exists():
+        if repo_path(layout, relative, "claude_rules").exists():
             issues.append(f"obsolete managed Claude rule: {relative}")
 
     if issues:
@@ -565,7 +724,9 @@ def check(root: Path) -> int:
             print_conflict_alternatives(alternate_issues)
         if len(issues) > len(alternate_issues):
             print(
-                "Run 'python3 ai/manage-agent-docs.py build' to regenerate.",
+                "Run "
+                f"'python3 {layout.manager_relative_path} build' "
+                "to regenerate.",
                 file=sys.stderr,
             )
         return 1
@@ -589,11 +750,11 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 def main(argv: Sequence[str] = tuple(sys.argv[1:])) -> int:
     args = parse_args(argv)
-    root = Path(__file__).absolute().parent.parent
     try:
+        layout = load_repository_layout(Path(__file__), Path.cwd())
         if args.command == "build":
-            return build(root, args.adopt_existing)
-        return check(root)
+            return build(layout, args.adopt_existing)
+        return check(layout)
     except (AgentDocsError, OSError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

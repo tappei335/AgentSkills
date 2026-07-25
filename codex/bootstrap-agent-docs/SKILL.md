@@ -7,11 +7,13 @@ description: Create or modernize concise, maintainable repository-wide AI agent 
 
 Create an evidence-based agent documentation system that fits the target repository. Spend root context only on non-obvious, always-relevant constraints; route narrower knowledge to triggered rules, nested instructions, or ordinary repository docs.
 
+Paths below use `ai/`, the default maintenance directory. When `ai/` is already repository-owned and the scaffolder selects an alternative, substitute that directory consistently everywhere.
+
 ## Outcome Contract
 
 Deliver all of the following unless the target repository or user request narrows the scope:
 
-- Treat `ai/fragments/` as the maintenance source for checked-in `AGENTS.md` and `CLAUDE.md` files without announcing that fact inside the generated root documents.
+- Treat `ai/fragments/` as the default maintenance source for checked-in `AGENTS.md` and `CLAUDE.md` files without announcing that fact inside the generated root documents. When `ai/` is already repository-owned, preserve it and select one unused alternative maintenance directory consistently.
 - Keep root instructions aggressively curated: retain only guidance that changes behavior, applies broadly at that scope, and is costly to miss or rediscover.
 - Keep `CLAUDE.md` especially small. Move path- or situation-specific guidance into `ai/rules/` so Claude loads it only when triggered.
 - Use nested instructions for subtree-specific guidance that AGENTS or both tools need; do not duplicate those details at the root.
@@ -66,9 +68,18 @@ python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root> --dry-run
 python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root>
 ```
 
-The scaffolder installs the reference generator and its source-layout documentation without replacing different existing files or claiming an existing repository-owned `ai/` directory. If it reports a conflict, present viable alternatives and recommend one from repository evidence instead of stopping at the error. Typical options are to port the tooling consistently to an unused root such as `.agent-docs/` or `tools/agent-docs/`, extend an existing generator, or keep the current topology and integrate the assets manually. Do not bypass a conflict by deleting user files.
+The scaffolder installs the reference generator and its source-layout documentation without replacing different existing files or claiming an existing repository-owned `ai/` directory. If `ai/` is already in use, preserve it and preview an unused alternative:
 
-The installed reference tool requires Python 3.8 or newer. If Python is not already available in local development and CI, port the behavior described in the installed `ai/README.md` to the repository's existing runtime instead of introducing an unapproved toolchain dependency.
+```sh
+python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root> --agent-docs-dir .agent-docs --dry-run
+python3 <skill-dir>/scripts/scaffold_agent_docs.py --repo <repo-root> --agent-docs-dir .agent-docs
+```
+
+Select the alternative from repository evidence; `.agent-docs/`, `tools/agent-docs/`, and `docs/agent-docs/` are candidates, not a precedence order. The scaffolder renders the source paths, manager command, layout metadata, and manifest location consistently for the selected directory. Do not split those artifacts across roots.
+
+If the selected directory also conflicts, present viable alternatives instead of stopping at the error. Extending an existing generator or keeping the current topology and integrating the assets manually may be safer than installing this one. Do not bypass a conflict by deleting user files.
+
+The installed reference tool requires Python 3.8 or newer. If Python is not already available in local development and CI, port the behavior described in the generated maintenance `README.md` to the repository's existing runtime instead of introducing an unapproved toolchain dependency.
 
 ## Build The Source Model
 
@@ -101,6 +112,8 @@ python3 ai/manage-agent-docs.py build --adopt-existing
 ```
 
 Never use the adoption flag as a shortcut around content migration. Inspect the generated root and nested outputs after building.
+
+When an alternative maintenance directory was selected, use the exact manager commands rendered in its `README.md` for local tasks and CI instead of the default `ai/manage-agent-docs.py` examples above.
 
 ## Integrate With Repository Workflows
 
@@ -140,3 +153,4 @@ Report the source layout, generated outputs, workflow/CI integration, commands a
 - Do not add nested files to every directory. Excess context is a maintenance cost.
 - Do not inject generic coding preferences merely because they are broadly useful. Require repository evidence or explicit user authorization for new behavioral policy.
 - Do not report a topology conflict without at least one safe alternative. Prefer preserving established repository-owned paths and explain every required migration before changing or removing them.
+- Do not use an alternative maintenance directory to evade conflicts in active agent instructions or generated outputs. It is a namespace fallback for an already-owned `ai/` directory, not a shortcut around migration.
