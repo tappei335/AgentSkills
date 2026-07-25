@@ -2,6 +2,8 @@
 
 Use this reference to select the smallest set of instructions that materially improves agent decisions.
 
+Paths use `ai/`, the default agent-documentation directory. If the repository already owns `ai/`, use the single alternative selected by the scaffolder everywhere this reference says `ai/`.
+
 ## Contents
 
 - Evidence map

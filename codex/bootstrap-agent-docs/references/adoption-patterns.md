@@ -2,6 +2,8 @@
 
 Select the pattern that matches the repository's current state. Preserve existing behavior before improving organization.
 
+Paths use `ai/`, the default agent-documentation directory. If the repository already owns `ai/`, use the single alternative selected by the scaffolder everywhere this reference says `ai/`.
+
 ## Greenfield Repository
 
 1. Install the tooling.
@@ -12,6 +14,18 @@ Select the pattern that matches the repository's current state. Preserve existin
 6. Add nested fragments only after a concrete local need appears.
 
 Do not populate the repository with speculative rules or empty nested documentation.
+
+## Existing Repository-Owned `ai/` Directory
+
+Treat a nonempty `ai/` directory as repository-owned unless the scaffold layout marker proves that this skill installed it. Do not mix agent-documentation files into an existing application package, data directory, or tooling namespace merely because the reference layout defaults to `ai/`.
+
+1. Confirm what owns `ai/` and whether an existing documentation generator should be extended instead.
+2. Run the default scaffold dry-run and preserve the reported conflict.
+3. Select one unused, repository-appropriate alternative such as `.agent-docs/`, `tools/agent-docs/`, or `docs/agent-docs/`.
+4. Rerun the dry-run and installation with `--agent-docs-dir <relative-path>`.
+5. Use the generated README's exact build and check commands in task-runner and CI integration.
+
+The selected directory owns its `fragments/`, `rules/`, manager, layout metadata, README, and manifest. Do not distribute these files across multiple roots. Choosing an alternative does not bypass conflicts in `AGENTS.md`, `CLAUDE.md`, `.claude/rules/`, or alternate active instruction files; migrate those conflicts normally.
 
 ## One Existing Agent File
 
@@ -90,9 +104,9 @@ Use the repository's current command surface:
 | npm/pnpm/yarn | `agent-docs` | `check:agent-docs` |
 | Just | `agent-docs` | `check-agent-docs` |
 | Task | `agent-docs` | `check-agent-docs` |
-| None | Document the direct Python commands | Document the direct Python commands |
+| None | Document the rendered direct Python build command | Document the rendered direct Python check command |
 
-Use the names already established by the repository when equivalents exist. Make the check call `python3 ai/manage-agent-docs.py check`; it must not rewrite the worktree.
+Use the names already established by the repository when equivalents exist. Make the check call the exact command rendered in the selected maintenance directory's README; for the default layout this is `python3 ai/manage-agent-docs.py check`. It must not rewrite the worktree.
 
 Add that same check to an existing lightweight CI validation job. Ensure the job provisions Python 3.8+ before using the reference tool. If the repository intentionally has no Python runtime, implement the same contract in its existing runtime and test both generation and stale-output failure.
 
