@@ -1,11 +1,13 @@
 ---
 name: github-pr-review
-description: Review GitHub pull requests or explicit diffs and produce actionable, evidence-backed findings. Use when the user asks to review a PR by number, URL, branch, commit, commit range, or diff; requests a code-review pass; asks to draft or publish review comments; or requests re-review after fixes. Do not use for implementation unless the user also asks to fix findings.
+description: Review the complete changed-code surface of GitHub pull requests or explicit diffs and produce actionable, evidence-backed findings. Use when the user asks to review a PR by number, URL, branch, commit, commit range, or diff; requests a code-review pass; asks to draft or publish review comments; or requests re-review after fixes. Do not use for implementation unless the user also asks to fix findings.
 ---
 
 # GitHub PR Review
 
 ## Operating Contract
+
+Treat complete diff inspection as the primary obligation. Read every changed code hunk before concluding; do not substitute the PR description, commit messages, CI status, tests, or spot checks for reviewing the code itself.
 
 Review with a defect-finding stance. Prioritize correctness, regressions, security and privacy, data and API integrity, project invariants, missing behavior coverage, and CI risk over summary or style commentary.
 
@@ -17,19 +19,25 @@ Default to chat-only. Publish, approve, request changes, merge, close, resolve t
 
 Identify the repository and the exact review surface from the PR number, URL, branch, commit, range, current checkout, or user-provided diff. For a GitHub PR, record the number, head and base SHAs, changed files, PR body, and current check status. Ask one concise question only when the target cannot be resolved safely.
 
+Obtain the authoritative base-to-head diff, account for additions, modifications, deletions, and renames, and verify that tool output is not truncated. Build an internal inventory of every changed file and hunk. If the complete diff cannot be retrieved, report the coverage gap and do not imply a complete review.
+
 Read repository and path-local instructions before judging the change. A more specific project review skill takes precedence.
 
 Choose the mode:
 
-- **Initial:** inspect the full changed surface and relevant surrounding contracts.
-- **Re-review:** inspect prior findings and unresolved threads, then the incremental changes since the reviewed commit.
-- **CI-focused:** inspect failing checks and logs first, then connect them to the changed path or classify them as inconclusive.
+- **Initial:** inspect every changed file and hunk plus relevant surrounding contracts.
+- **Re-review:** inspect prior findings and unresolved threads, then every incremental change since the reviewed commit.
+- **CI-focused:** inspect failing checks and logs first, then inspect the complete changed surface with emphasis on paths connected to the failures.
 
 Use GitHub tools when available and `gh pr view`, `gh pr diff`, `gh pr checks`, or local git for additional context. Do not rely only on the PR description or filenames.
 
 ## Review The Change
 
-Inspect the diff, surrounding implementation, callers, tests, fixtures, docs, schemas, and public contracts needed to verify realistic behavior. Focus on:
+Start from the complete diff. For each changed code hunk, read enough surrounding implementation to understand the before-and-after behavior, then trace affected control flow, data flow, callers, callees, tests, fixtures, schemas, and public contracts as needed. Inspect deletions and moved code as carefully as additions; look for removed guards, cleanup, validation, error handling, or behavior whose required call-site changes are absent from the diff.
+
+Maintain an internal coverage ledger of changed files and hunks. Account for all of them before finalizing. Inspect generated, vendored, lock, and binary artifacts proportionally, and disclose any material item that could not be meaningfully reviewed.
+
+Focus on:
 
 - functional and degraded-path correctness;
 - security, privacy, authorization, and data integrity;
@@ -39,7 +47,7 @@ Inspect the diff, surrounding implementation, callers, tests, fixtures, docs, sc
 - material performance, scalability, stability, or observability risks;
 - documentation that becomes false because of the change.
 
-Run repository-native validation when feasible and proportional. Treat CI as evidence to investigate, not an automatic finding. Distinguish deterministic failures from flakes, infrastructure, missing secrets, stale bases, and unrelated jobs.
+Run repository-native validation when feasible and proportional. Treat tests and CI as supporting evidence, not substitutes for diff inspection. Treat CI failures as evidence to investigate, not automatic findings. Distinguish deterministic failures from flakes, infrastructure, missing secrets, stale bases, and unrelated jobs.
 
 For a re-review, do not repeat resolved findings. State which prior items are resolved, remain, or are replaced by a different issue.
 
@@ -62,7 +70,7 @@ Use `Potential issue` for bugs, regressions, and invariant violations; `Refactor
 
 ## Skeptical Pass
 
-Before finalizing, try to disprove every finding from the diff, surrounding code, tests, CI, or repository rules. Confirm it is caused or exposed by the change, calibrate severity, and re-check the highest-risk path for a missed issue. If no findings remain, verify that changed behavior and meaningful check gaps were actually inspected.
+Before finalizing, confirm the changed-file and hunk inventory is fully accounted for, then try to disprove every finding from the diff, surrounding code, tests, CI, or repository rules. Confirm it is caused or exposed by the change, calibrate severity, and re-check the highest-risk path for a missed issue. If no findings remain, verify that all changed behavior and meaningful check gaps were actually inspected.
 
 ## Publish When Authorized
 
@@ -72,4 +80,4 @@ Keep published paths repository-relative and exclude local paths, tokens, or env
 
 ## Output
 
-Lead with findings ordered by severity. For each include title, severity, type/category, location, problem, impact, evidence, and suggested fix. Include checks only when failing, missing, stale, skipped, or different from local evidence. Put assumptions and residual risks in notes. When no actionable findings exist, say so directly and mention only material validation gaps.
+Lead with findings ordered by severity. For each include title, severity, type/category, location, problem, impact, evidence, and suggested fix. Include checks only when failing, missing, stale, skipped, or different from local evidence. Put assumptions, residual risks, and material diff-coverage gaps in notes. When no actionable findings exist, say so directly and mention only material validation or coverage gaps.
