@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import re
 import sys
@@ -70,7 +71,7 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, str], list[str]]:
 
 def skill_paths() -> list[Path]:
     paths: list[Path] = []
-    for agent_dir in (ROOT / "codex", ROOT / "claude"):
+    for agent_dir in (ROOT / "codex", ROOT / "claude", ROOT / "skills"):
         if not agent_dir.exists():
             continue
         paths.extend(sorted(agent_dir.glob("*/SKILL.md")))
@@ -103,7 +104,7 @@ def validate_skill(path: Path) -> list[str]:
     elif len(description) < 80:
         errors.append(f"{rel}: description is too short to be a useful trigger")
 
-    if agent == "codex":
+    if agent in {"codex", "skills"}:
         extra_keys = [key for key in keys if key not in {"name", "description"}]
         if extra_keys:
             errors.append(f"{rel}: Codex frontmatter has unsupported keys: {', '.join(extra_keys)}")
@@ -165,6 +166,11 @@ def validate_executable_scripts(skill_dir: Path, errors: list[str]) -> None:
 
 
 def main() -> int:
+    global ROOT
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=ROOT, help="Repository or generated distribution root")
+    args = parser.parse_args()
+    ROOT = args.root.resolve()
     paths = skill_paths()
     if not paths:
         print("No skills found")

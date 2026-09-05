@@ -13,22 +13,7 @@ Use this reference only when `$team-dev` will spawn subagents, assign real revie
 
 ## Model And Reasoning Selection
 
-Prefer automatic model selection unless quality, latency, or cost requirements justify an override. When the runtime supports per-agent configuration, match the model to the work:
-
-- Use `gpt-5.6` for ambiguous or high-value architecture, cross-boundary implementation, difficult debugging, security work, and final reasoning that needs strong judgment and follow-through.
-- Use `gpt-5.6-terra` for everyday implementation, exploration, large-file scans, supporting-document review, and other bounded work that benefits from strong tool use at lower latency and cost.
-- Use `gpt-5.6-luna` for clear, repeatable, high-volume tasks with objective acceptance criteria, such as extraction, classification, mechanical transformation, or structured summaries.
-
-Choose the lowest reasoning effort that meets the acceptance criteria:
-
-- Use `low` for straightforward mechanical work and `medium` as the normal default.
-- Use `high` for complex logic, edge cases, architect review, adversarial review, or security review.
-- Reserve `xhigh` or `max` for the hardest quality-first tasks after a lower setting proves insufficient.
-- Use Ultra only at the root when the product supports it and meaningful parallel work justifies the extra agents and tokens; do not assign it reflexively to workers.
-
-Do not pin every role to the most capable model. Keep the main integrator or critical reviewer strong, and use efficient models for well-specified supporting slices. For repeated workflows, compare representative results for correctness, completeness, evidence, latency, and token use before standardizing a model or effort.
-
-For a custom Codex agent, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. If the spawn interface cannot select a model, use a configured custom agent or inherit the parent model. Never claim a per-role model was used unless the runtime or agent configuration confirms it. Record only material overrides and their rationale in the team contract.
+Use the judgment role for architecture, difficult debugging, security, and critical review; the bounded role for implementation and exploration with clear scope; and the mechanical role only for objectively checkable extraction or transformation. Read [model selection](../../../policies/model-selection.md) before choosing a model or reasoning effort. Record material overrides and their rationale in the team contract.
 
 ## Worker Prompt
 

@@ -24,7 +24,7 @@ Keep manager and designer responsibilities separate:
 
 When subagents are available and delegation is permitted, delegate every implementation pass to a designer worker. Use a read-only explorer only for a bounded DOM/CSS or asset sweep. If delegation is unavailable or disallowed, disclose the limitation and run visibly separate local manager and designer passes.
 
-Prefer automatic model selection. When explicit selection is supported, use `gpt-5.6` with high effort for visual direction, responsive reconstruction, designer implementation, and final acceptance; use `gpt-5.6-terra` with medium effort for bounded DOM/CSS, asset, or breakpoint sweeps. Use `gpt-5.6-luna` only for mechanical inventories. If the spawn interface cannot select a model, use a configured agent or inherit the parent model, and do not claim an override.
+Use the judgment role for visual direction, designer implementation, and acceptance; the bounded role for DOM/CSS or asset sweeps; and the mechanical role only for inventories. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 ## Reconstruct The Target
 
