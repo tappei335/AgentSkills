@@ -55,7 +55,7 @@ For a re-review, do not repeat resolved findings. State which prior items are re
 
 For large PRs with independent areas, use read-only subagents only when the user or applicable project instructions permit delegation and separate lenses materially improve confidence. Assign disjoint files, behaviors, or risks; require evidence-backed findings and let the main agent verify and deduplicate them.
 
-Prefer automatic model selection. When explicit per-agent selection is supported, use `gpt-5.6-terra` with medium effort for bounded diff, CI, or test sweeps and `gpt-5.6` with high effort for cross-file correctness, security, migration, or adversarial review. Use `gpt-5.6-luna` only for mechanical inventories. If the runtime cannot select a model, inherit the parent configuration and do not claim an override.
+Use the bounded role for diff and test sweeps, the judgment role for correctness, security, and adversarial review, and the mechanical role only for inventories. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 ## Classify Findings
 

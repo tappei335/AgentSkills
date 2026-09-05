@@ -46,9 +46,7 @@ Give each agent the primary question, scope, evidence already found, one specifi
 
 Use read-only agents for research and critique. Use a write-capable worker only for a bounded reproduction or measurement in an isolated workspace when the request permits it.
 
-Prefer automatic model selection unless quality, latency, or cost requires an override. When supported, use `gpt-5.6-terra` with medium effort for broad source or codebase sweeps; use `gpt-5.6` with high effort for root-cause reasoning, high-stakes comparison, or adversarial critique; use `gpt-5.6-luna` with low effort only for mechanical extraction, classification, deduplication, or structured summaries. Reserve `xhigh` or `max` for the hardest quality-first synthesis after a lower setting proves insufficient.
-
-For custom Codex agents, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. Never claim an override unless the runtime or agent configuration confirms it.
+Use the bounded role for evidence sweeps, the judgment role for synthesis and critique, and the mechanical role only for extraction or classification. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 Treat subagent output as evidence leads, not conclusions. Verify citations, resolve conflicts, and reconcile each material critique as adopted, rejected with reason, or unresolved with confidence impact.
 

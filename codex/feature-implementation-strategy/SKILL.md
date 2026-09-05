@@ -68,9 +68,7 @@ Consult at least one real subagent before finalizing. Scale independent critique
 
 Give each read-only critic the decision contract, relevant evidence, candidate choices, one narrow lens, and a required output of prioritized findings with citations, confidence, and a concrete correction. Useful lenses are goal fit, hidden coupling, architecture fit, simplification, correctness/security/rollout risk, performance and memory, verification strength, and adversarial failure.
 
-Prefer automatic model selection unless quality, latency, or cost requires an override. When supported, use `gpt-5.6-terra` with medium effort for system mapping and evidence sweeps; use `gpt-5.6` with high effort for architecture, risk, performance, or adversarial critique; use `gpt-5.6-luna` with low effort only for mechanical, objectively checkable inventories. Reserve `xhigh` or `max` for the hardest quality-first synthesis after a lower setting proves insufficient.
-
-For custom Codex agents, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. Never claim an override unless the runtime or agent configuration confirms it.
+Use the bounded role for system mapping, the judgment role for architecture and critique, and the mechanical role only for objectively checkable inventories. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 Wait for required critics and reconcile every material finding as adopted, rejected with reason, or unresolved with its confidence impact. The main agent owns the final recommendation.
 

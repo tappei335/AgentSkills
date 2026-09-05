@@ -42,16 +42,16 @@ Avoid ornamental complexity, raw palette colors where semantic tokens exist, lan
 
 ## Model And Iteration
 
-Prefer automatic model selection. When explicit selection is available, use `gpt-5.6` for ambiguous, high-polish, or visually judgment-heavy work and `gpt-5.6-terra` for bounded changes inside a mature design system. Do not use `gpt-5.6-luna` for subjective visual decisions; reserve it for mechanical inventories or transformations with objective acceptance criteria.
+Use the judgment role for subjective visual decisions, the bounded role for changes within an established design system, and the mechanical role only for objective inventories or transformations. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 Evaluate the result against the thesis and user task. If it feels generic, strengthen product-specific hierarchy or the signature move. If it feels flashy, remove decoration. If conventions or responsive behavior broke, correct those before adding polish.
 
 ## Validate
 
-Run repository-native lint, typecheck, tests, and visual or interaction checks proportional to the change. For applicable source files, also run the bundled validator:
+Run repository-native lint, typecheck, tests, and visual or interaction checks proportional to the change. For applicable source files, also run the bundled validator. Set `skill_dir` to the absolute directory containing this loaded `SKILL.md`:
 
 ```bash
-bash ~/.codex/skills/product-ui-design/scripts/validate.sh --output <written-file> --result /tmp/product-ui-design-validate.json
+bash "$skill_dir/scripts/validate.sh" --output <written-file> --result /tmp/product-ui-design-validate.json
 ```
 
 When editing this skill from its source repository, use `codex/product-ui-design/scripts/validate.sh`. Treat validator failures as leads: inspect applicability, fix real gaps, and explain any intentional exception.

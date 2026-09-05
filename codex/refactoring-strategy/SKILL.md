@@ -66,9 +66,7 @@ Consult at least one real subagent before finalizing. Scale independent critique
 
 Use read-only agents for critique and evidence checks. Give each the decision contract, relevant evidence, one narrow lens, and a required output of prioritized findings with citations, confidence, and a concrete correction. Useful lenses are payoff and scope, hotspot evidence, hidden coupling, behavior-preservation gaps, phase reversibility, and half-migrated failure modes.
 
-Prefer automatic model selection unless quality, latency, or cost requires an override. When supported, use `gpt-5.6-terra` with medium effort for repository scans and evidence aggregation; use `gpt-5.6` with high effort for architecture, safety, or adversarial critique; use `gpt-5.6-luna` with low effort only for mechanical, objectively checkable aggregation. Reserve `xhigh` or `max` for the hardest quality-first synthesis after a lower setting proves insufficient.
-
-For a custom Codex agent, set `model` and `model_reasoning_effort`; omit them to inherit the parent configuration. If the spawn interface cannot select a model, use a configured agent or inherit the parent model, and do not claim an override occurred.
+Use the bounded role for repository scans, the judgment role for migration safety and critique, and the mechanical role only for objectively checkable aggregation. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
 Wait for required critics, inspect their evidence, and reconcile every material finding as adopted, rejected with reason, or unresolved with its confidence impact. The main agent owns the final prioritization and roadmap.
 
