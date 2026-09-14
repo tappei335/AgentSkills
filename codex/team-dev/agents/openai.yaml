@@ -1,6 +1,6 @@
 interface:
   display_name: "Team Dev"
   short_description: "Coordinate explicit multi-agent implementation"
-  default_prompt: "Use $team-dev to coordinate this substantial repository change with explicit value priorities, disjoint worker ownership, integrated review, verification, and PR publication only when authorized."
+  default_prompt: "Use $team-dev to implement this repository change with suitable models, independent ownership, integrated review, and verification."
 policy:
   allow_implicit_invocation: false

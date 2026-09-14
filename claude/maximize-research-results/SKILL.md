@@ -1,15 +1,17 @@
 ---
 name: maximize-research-results
 description: >
-  Improve investigation and research tasks by inferring the user's real intent,
-  decision context, success criteria, constraints, and expected deliverable, then
-  iterating with evidence gathering, mandatory subagent consultation via the Agent
-  tool, critique, and synthesis. This skill requires at least one subagent for
-  every completed investigation; if subagents cannot be used, stop and report the
-  blocker instead of substituting local-only review. Use when the user asks to investigate, research,
-  look into, analyze, audit, compare, diagnose, find root cause, summarize findings,
-  or "調査して", especially when the request is broad, ambiguous, high-impact, or
-  would benefit from structured inquiry before answering.
+  Conduct deep, decision-ready investigations by scoping the question, gathering
+  primary evidence, reconciling competing explanations, and requiring independent
+  subagent critique via the Agent tool. Use only when multiple sources, artifacts,
+  or plausible hypotheses must be reconciled; a consequential claim needs broad
+  authoritative verification; or the user explicitly requests deep, comprehensive,
+  or adversarial research. Do not trigger solely from generic requests to investigate,
+  research, analyze, audit, compare, diagnose, find root cause, summarize, or
+  "調査して". Do not use for focused lookups, simple explanations or summaries,
+  routine bug inspection, implementation, PR review, or comparisons answerable
+  through one bounded evidence path. A usable real subagent result is required
+  before completion; if unavailable, report the blocker.
 ---
 
 # Maximize Research Results

@@ -1,5 +1,16 @@
 # Playwright CLI Workflow
 
+Set `skill_dir` to the absolute directory containing the loaded skill’s `SKILL.md` before running bundled helpers.
+
+## Contents
+
+- [Viewport Matrix](#viewport-matrix)
+- [DOM/CSS Inspection](#domcss-inspection)
+- [Command Templates](#command-templates)
+- [Process Artifacts](#process-artifacts)
+- [Manager Checklist](#manager-checklist)
+- [Designer Checklist](#designer-checklist)
+
 Use this reference when inspecting target DOM/CSS, capturing screenshots, comparing implementation output, and preserving manager/designer iteration evidence.
 
 ## Viewport Matrix
@@ -78,7 +89,7 @@ npx playwright screenshot --browser chromium --viewport-size=1440,900 --full-pag
 Compare a pair when the project has Playwright installed:
 
 ```sh
-node /home/ippei/.codex/skills/site-design-recreator/scripts/compare_screenshots.mjs \
+node "$skill_dir/scripts/compare_screenshots.mjs" \
   .design-reference/desktop.png \
   .design-actual/desktop.png \
   --out .design-diff/desktop.png \
@@ -89,14 +100,14 @@ node /home/ippei/.codex/skills/site-design-recreator/scripts/compare_screenshots
 Audit raster-image usage before final review:
 
 ```sh
-node /home/ippei/.codex/skills/site-design-recreator/scripts/audit_image_usage.mjs .
+node "$skill_dir/scripts/audit_image_usage.mjs" .
 ```
 
 Persist the result:
 
 ```sh
 mkdir -p .design-process
-node /home/ippei/.codex/skills/site-design-recreator/scripts/audit_image_usage.mjs . > .design-process/asset-audit.json
+node "$skill_dir/scripts/audit_image_usage.mjs" . > .design-process/asset-audit.json
 ```
 
 ## Process Artifacts

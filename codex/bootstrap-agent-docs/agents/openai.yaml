@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bootstrap Agent Docs"
+  short_description: "Create concise AGENTS.md and CLAUDE.md configs"
+  default_prompt: "Use $bootstrap-agent-docs to create concise AGENTS.md and CLAUDE.md files with scoped Claude rules for this repository."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refactoring Strategy"
+  short_description: "Plan large refactors with evidence-based prioritization"
+  default_prompt: "Use $refactoring-strategy to produce an evidence-based, reversible refactoring roadmap with independent subagent critique and no product-code edits."

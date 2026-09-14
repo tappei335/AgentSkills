@@ -1,5 +1,20 @@
 # Frontend Design Core Reference
 
+## Contents
+
+- [Core Rules](#core-rules)
+- [Operating Modes](#operating-modes)
+- [Design Token Discipline](#design-token-discipline)
+- [Component Reuse](#component-reuse)
+- [State Design Requirements](#state-design-requirements)
+- [Status Multi-Encoding](#status-multi-encoding)
+- [Accessibility](#accessibility)
+- [URL State Preservation](#url-state-preservation)
+- [Data-to-Action Connection](#data-to-action-connection)
+- [Default Visual Guardrails](#default-visual-guardrails)
+- [Anti-Patterns](#anti-patterns)
+- [Short Heuristics](#short-heuristics)
+
 Create frontend work that feels intentional, specific to the product, and realistic to ship.
 
 This guidance exists to avoid two common failure modes:
@@ -50,12 +65,7 @@ Use this for new app sections or greenfield product screens.
 
 ### Marketing or Launch Surface
 
-Use this for landing pages, promos, and demos where memorability matters.
-
-- Choose a stronger visual stance than you would for app UI
-- Use one dominant visual idea consistently across hero, sections, and CTA treatment
-- Keep conversion structure obvious even when the visuals are bold
-- Do not fall back to generic gradient-blob startup art
+This skill does not cover landing pages, promos, or brand-first surfaces. Route those requests to a marketing or general frontend workflow instead of applying product-screen constraints.
 
 ## Design Token Discipline
 
@@ -84,7 +94,7 @@ Before building a new component or utility:
 3. Check `lib/` for existing utility functions
 
 Specific rules:
-- Use shadcn Table for tabular data, Card for bordered content sections, Badge for status indicators, ToggleGroup for filter toolbars
+- When the repository uses shadcn/ui, prefer its Table for tabular data, Card for bordered sections, Badge for status, and ToggleGroup for filter toolbars
 - Reuse existing status display components (StatusBadge) instead of reimplementing status-to-color mappings
 - Reuse existing time formatting components (RelativeTime) instead of creating new formatRelativeTime utilities
 - Only create a new component when no existing one covers the need. Extend rather than duplicate.

@@ -1,137 +1,83 @@
 ---
 name: github-pr-review
-description: Review GitHub pull requests in any repository and produce actionable findings. Use when the user asks to review a PR by number, URL, branch, commit, commit range, or diff; asks for a code-review pass; asks to draft or publish PR review comments; or asks to re-review after fixes. Do not use for implementation tasks unless the user asks to fix findings after review.
+description: Review the complete changed-code surface of GitHub pull requests or explicit diffs and produce actionable, evidence-backed findings. Use when the user asks to review a PR by number, URL, branch, commit, commit range, or diff; requests a code-review pass; asks to draft or publish review comments; or requests re-review after fixes. Do not use for implementation unless the user also asks to fix findings.
 ---
 
 # GitHub PR Review
 
-Review the specified GitHub pull request with a code-review stance: prioritize correctness, regressions, security/privacy, project invariants, missing tests, and CI risk over summaries or style commentary.
+## Operating Contract
 
-Hard rules, in priority order:
+Treat complete diff inspection as the primary obligation. Read every changed code hunk before concluding; do not substitute the PR description, commit messages, CI status, tests, or spot checks for reviewing the code itself.
 
-1. No evidence, no finding: every finding carries location, severity, type/category, problem, impact, and a fix direction.
-2. Default to chat-only review. Publish only when the user asks to post or a project rule makes posting the default.
-3. Run the Final Skeptical Pass before answering. Cut any finding you cannot defend from the diff, surrounding code, tests, or CI evidence.
-4. Never approve, request changes, merge, close, resolve threads, push commits, or modify files unless explicitly asked.
+Review with a defect-finding stance. Prioritize correctness, regressions, security and privacy, data and API integrity, project invariants, missing behavior coverage, and CI risk over summary or style commentary.
 
-## Workflow
+No evidence, no finding. Anchor each finding to the changed behavior and include a repository-relative location, severity, classification, problem, impact, and minimal fix direction. Remove concerns that are speculative, pre-existing without being exposed by the change, preference-only, or unsupported by the diff and surrounding evidence.
 
-1. Identify the repository and PR from the user's PR number, URL, branch, commit SHA, commit range, current checkout, or provided diff. If the PR cannot be identified, ask one concise question for the missing identifier.
-2. Read repository instructions that apply to the touched paths, such as `AGENTS.md`, `CLAUDE.md`, `.github/pull_request_template.md`, `CONTRIBUTING.md`, and path-local rules. A more specific project review skill or rule takes precedence over this generic workflow.
-3. Determine the review mode:
-   - Initial review: inspect the full changed surface and relevant surrounding code.
-   - Re-review: inspect prior review comments, unresolved threads, new commits since the prior review, and whether earlier findings were actually resolved.
-   - CI-focused review: inspect failing checks and logs first, then connect failures to changed code or call out inconclusive infrastructure/flake evidence.
-4. Fetch PR metadata, changed files, diff or per-file patches, existing review comments or unresolved threads, PR body, and CI/check status. Use the GitHub app tools when available; use `gh pr view`, `gh pr diff`, `gh pr checks`, and local git commands as fallback or for richer context.
-5. Inspect the surrounding code, tests, fixtures, docs, and public contracts needed to verify the diff. Do not rely only on file names or the PR description.
-6. Review for actionable issues: functional correctness, regressions, security/privacy, data/API contract drift, architecture or project-rule violations, missing tests/fixtures, documentation drift, performance or scalability risk, and CI/check gaps.
-7. Run local validation only when feasible and proportional to the change. Prefer the repository's own required commands. Report commands that were not run and why.
-8. Run the final skeptical pass before answering.
-9. Produce findings first. If there are no actionable findings, say that clearly and mention only meaningful residual risks or check gaps.
+Default to chat-only. Publish, approve, request changes, merge, close, resolve threads, push commits, or modify files only when explicitly authorized or when an applicable repository rule clearly makes that action the default.
 
-## CI And Re-Review
+## Resolve The Review Target
 
-Treat CI as evidence to investigate, not as an automatic finding. When checks fail, inspect the failing job, relevant logs, and changed code path before deciding whether the PR introduced the failure. Distinguish deterministic product/test failures from flakes, infrastructure failures, missing secrets, stale base branches, or unrelated failures.
+Identify the repository and the exact review surface from the PR number, URL, branch, commit, range, current checkout, or user-provided diff. For a GitHub PR, record the number, head and base SHAs, changed files, PR body, and current check status. Ask one concise question only when the target cannot be resolved safely.
 
-For re-reviews, do not repeat resolved findings. Start from prior comments and unresolved threads, then inspect the incremental diff since the last review when that commit range is available. State which prior findings appear resolved, still unresolved, or replaced by a different issue.
+Obtain the authoritative base-to-head diff, account for additions, modifications, deletions, and renames, and verify that tool output is not truncated. Build an internal inventory of every changed file and hunk. If the complete diff cannot be retrieved, report the coverage gap and do not imply a complete review.
 
-## Publishing
+Read repository and path-local instructions before judging the change. A more specific project review skill takes precedence.
 
-Default to a chat-only review unless the user explicitly asks to post, publish, comment on the PR, request changes, or a project-specific skill/rule says publishing is the default.
+Choose the mode:
 
-When publishing:
+- **Initial:** inspect every changed file and hunk plus relevant surrounding contracts.
+- **Re-review:** inspect prior findings and unresolved threads, then every incremental change since the reviewed commit.
+- **CI-focused:** inspect failing checks and logs first, then inspect the complete changed surface with emphasis on paths connected to the failures.
 
-- Use the repository's preferred review path when documented. Otherwise use the GitHub app connector or `gh` as appropriate.
-- Prefer inline comments only when the issue maps to a specific changed diff line and the fix is local to that line or nearby block.
-- Prefer a top-level review comment for cross-file design issues, missing tests, CI failures, rollout risks, or findings that cannot be anchored cleanly to one changed line.
-- Avoid scattering duplicate inline comments for the same root cause; write one finding with representative locations instead.
-- Do not approve, request changes, merge, close, resolve threads, push commits, or modify files unless the user explicitly asks for that action.
-- Do not post with the user's local GitHub identity if the user requested a bot/app identity and the repository lacks that configured path; instead explain the blocker and provide the exact review Markdown.
-- Keep paths repository-relative. Do not include local absolute paths, home directories, tokens, or environment details in PR comments.
+Use GitHub tools when available and `gh pr view`, `gh pr diff`, `gh pr checks`, or local git for additional context. Do not rely only on the PR description or filenames.
 
-## Findings
+## Review The Change
 
-Prefer concrete findings over general suggestions. Each finding must include:
+Start from the complete diff. For each changed code hunk, read enough surrounding implementation to understand the before-and-after behavior, then trace affected control flow, data flow, callers, callees, tests, fixtures, schemas, and public contracts as needed. Inspect deletions and moved code as carefully as additions; look for removed guards, cleanup, validation, error handling, or behavior whose required call-site changes are absent from the diff.
 
-- `Severity`: `Critical`, `High`, `Medium`, or `Low`.
-- `Type`: `Potential issue`, `Refactor suggestion`, or `Nitpick`.
-- `Category`: `Functional correctness`, `Security / privacy`, `Data integrity / API contract`, `Architecture / invariants`, `Test / fixture coverage`, `Documentation drift`, `Performance / scalability`, `Stability / availability`, or `Maintainability`.
-- `Location`: repository-relative file path with line or diff location when available.
-- `Problem`, `Impact`, and `Suggested fix`.
+Maintain an internal coverage ledger of changed files and hunks. Account for all of them before finalizing. Inspect generated, vendored, lock, and binary artifacts proportionally, and disclose any material item that could not be meaningfully reviewed.
 
-Severity guidance:
+Focus on:
 
-- `Critical`: likely exploit, data loss, severe privacy breach, production outage, irreversible migration failure, or a merge-blocking correctness issue with high confidence.
-- `High`: likely user-visible regression, security/privacy weakness, data corruption, broken public contract, or deterministic CI failure in a common or important path.
-- `Medium`: plausible correctness, compatibility, test coverage, performance, scalability, or maintainability issue that can break realistic usage but is bounded in blast radius.
-- `Low`: limited edge case, documentation drift, minor maintainability risk, or small test gap with low immediate impact.
+- functional and degraded-path correctness;
+- security, privacy, authorization, and data integrity;
+- API, schema, serialization, and compatibility drift;
+- architecture, dependency direction, and repository-rule violations;
+- missing tests or fixtures for changed behavior;
+- material performance, scalability, stability, or observability risks;
+- documentation that becomes false because of the change.
 
-Use `Nitpick` only when the user asks for style-level review or the issue blocks documented project standards. Avoid generic praise, release notes, broad refactor ideas, preference-only style comments, speculative future improvements, and findings that cannot be tied to PR behavior or project rules.
+Run repository-native validation when feasible and proportional. Treat tests and CI as supporting evidence, not substitutes for diff inspection. Treat CI failures as evidence to investigate, not automatic findings. Distinguish deterministic failures from flakes, infrastructure, missing secrets, stale bases, and unrelated jobs.
 
-Do not file a finding solely because code could be cleaner. File it only when the current diff creates a realistic bug, regression, review blocker, project-rule violation, or material maintenance risk.
+For a re-review, do not repeat resolved findings. State which prior items are resolved, remain, or are replaced by a different issue.
 
-## Final Skeptical Pass
+## Scale Review Effort
 
-Before finalizing:
+For large PRs with independent areas, use read-only subagents only when the user or applicable project instructions permit delegation and separate lenses materially improve confidence. Assign disjoint files, behaviors, or risks; require evidence-backed findings and let the main agent verify and deduplicate them.
 
-1. Re-read each finding and try to disprove it from the diff, surrounding code, tests, or CI evidence.
-2. Check whether the finding is in scope for this PR and caused or exposed by the change.
-3. Verify severity against the rubric; downgrade or remove overstated findings.
-4. Re-check the highest-risk changed path for a missed correctness, security, data, or compatibility issue.
-5. If there are no findings, confirm that the changed behavior, tests, and CI evidence were sufficient for a no-finding review.
+Use the bounded role for diff and test sweeps, the judgment role for correctness, security, and adversarial review, and the mechanical role only for inventories. Read [model selection](../../policies/model-selection.md) before choosing a model or reasoning effort.
 
-## Review Format
+## Classify Findings
 
-Use this structure for reviews with findings:
+Use these severities:
 
-```markdown
-## Review
+- **Critical:** likely exploit, data loss, severe privacy breach, outage, irreversible migration failure, or high-confidence merge blocker.
+- **High:** likely user-visible regression, security weakness, corruption, broken public contract, or deterministic failure on an important path.
+- **Medium:** realistic bounded correctness, compatibility, coverage, performance, stability, or maintenance failure.
+- **Low:** limited edge case, documentation drift, or small but concrete maintenance or test risk.
 
-### Findings
+Use `Potential issue` for bugs, regressions, and invariant violations; `Refactor suggestion` only for material maintenance risk introduced by the change; `Nitpick` only when requested or required by project standards. Classify by functional correctness, security/privacy, data/API contract, architecture/invariants, test/fixture coverage, documentation drift, performance/scalability, stability/availability, or maintainability.
 
-| # | Severity | Type / category | Location | Finding |
-|---|---|---|---|---|
-| 1 | Medium | Potential issue / Functional correctness | `src/path/file.rs:123` | Concise issue title |
+## Skeptical Pass
 
-<details>
-<summary><strong>1. Medium:</strong> Concise issue title</summary>
+Before finalizing, confirm the changed-file and hunk inventory is fully accounted for, then try to disprove every finding from the diff, surrounding code, tests, CI, or repository rules. Confirm it is caused or exposed by the change, calibrate severity, and re-check the highest-risk path for a missed issue. If no findings remain, verify that all changed behavior and meaningful check gaps were actually inspected.
 
-**Location**
-`src/path/file.rs:123`
+## Publish When Authorized
 
-**Classification**
-Potential issue / Functional correctness
+Use the repository's documented review path, otherwise the GitHub connector or `gh`. Use inline comments for specific changed lines and a top-level review for cross-file causes, coverage gaps, CI failures, or rollout risks. Consolidate duplicate symptoms under one root cause.
 
-**Problem**
-What is wrong.
+Keep published paths repository-relative and exclude local paths, tokens, or environment details. If the requested bot or app identity is unavailable, report the blocker and provide the exact Markdown instead of posting as the user's local identity.
 
-**Impact**
-What can break or regress.
+## Output
 
-**Suggested fix**
-Minimal correction direction.
-
-</details>
-
-### Checks
-
-Only include when CI is failing, missing, stale, or local/manual validation changes review interpretation.
-
-### Notes
-
-Open questions, assumptions, or residual risks that are not findings.
-```
-
-Use this shorter structure when there are no actionable findings:
-
-```markdown
-## Review
-
-### Findings
-
-No blocking findings.
-
-### Checks
-
-Only include meaningful CI or validation gaps.
-```
+Lead with findings ordered by severity. For each include title, severity, type/category, location, problem, impact, evidence, and suggested fix. Include checks only when failing, missing, stale, skipped, or different from local evidence. Put assumptions, residual risks, and material diff-coverage gaps in notes. When no actionable findings exist, say so directly and mention only material validation or coverage gaps.
