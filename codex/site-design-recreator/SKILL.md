@@ -1,6 +1,6 @@
 ---
 name: site-design-recreator
-description: Recreate a specified website or web-app screen as maintainable responsive DOM/CSS with pixel-level fidelity across mobile through 4K. Use when asked to reproduce, clone, recreate, match, or implement a target from a URL, screenshot, or deployed reference. When subagents are available and delegation is permitted, require a manager-led loop with designer-subagent implementation, Playwright screenshots, DOM/CSS inspection, and repeated visual verification.
+description: Recreate a specified website or app screen from a URL, screenshot, or deployed reference as responsive DOM/CSS with visual fidelity. Use for matching an existing target, not open-ended UI design.
 ---
 
 # Site Design Recreator

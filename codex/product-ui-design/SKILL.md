@@ -1,6 +1,6 @@
 ---
 name: product-ui-design
-description: Design or implement operational product UI such as dashboards, settings, onboarding, internal tools, CRUD screens, tables, forms, admin panels, and app shells. Use when the user asks Codex to build, improve, fix, restyle, or redesign a product screen where clarity and workflow quality matter more than marketing spectacle. Preserve existing design systems while avoiding flashy AI-demo patterns and interchangeable SaaS defaults. Do not use for landing pages, marketing sites, brand exploration, or purely backend work.
+description: Design or improve operational product screens, forms, tables, dashboards, and app workflows within the existing design system. Use for product UI work; exclude marketing sites, reference-site recreation, and backend-only work.
 ---
 
 # Product UI Design

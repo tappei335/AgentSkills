@@ -1,6 +1,6 @@
 ---
 name: bootstrap-agent-docs
-description: Create or modernize concise, maintainable repository-wide AI agent configuration, including curated AGENTS.md and CLAUDE.md files, nested instructions, trigger-scoped Claude rules, regeneration commands, and CI drift checks. Use when a user asks to add, standardize, synchronize, migrate, trim, or reproduce agent-facing repository instructions in any codebase, especially when root instructions are duplicated, bloated, missing, hand-maintained, or inconsistent.
+description: Create or modernize repository agent instructions (AGENTS.md, CLAUDE.md, and scoped rules). Use for requests to add, synchronize, migrate, or trim those instructions; not ordinary code or documentation edits.
 ---
 
 # Bootstrap Agent Docs

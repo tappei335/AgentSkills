@@ -1,6 +1,6 @@
 ---
 name: team-dev
-description: Coordinate explicit multi-agent repository implementation with outcome-focused task framing, independent ownership, integration review, verification, and optional publication. Use when the user invokes `$team-dev`, says "team development mode" or "チーム開発モード", asks to split implementation across engineers or workers, or requests parallel implementers and reviewers. Do not use for planning-only strategy, investigation or audit, PR review, or small single-agent edits unless the user explicitly requests team mode.
+description: Coordinate repository implementation when the user explicitly requests team mode or parallel implementers and reviewers. Exclude planning-only work, research, and PR review; use a light workflow if no useful split exists.
 ---
 
 # Team Dev

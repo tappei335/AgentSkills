@@ -1,6 +1,6 @@
 ---
 name: refactoring-strategy
-description: Design evidence-based strategies for large-scale refactoring, technical-debt reduction, and legacy modernization without editing product code. Use when the user requests a refactoring strategy or plan, technical-debt assessment or prioritization, modernization roadmap, staged migration, monolith or module decomposition, "リファクタリング戦略", "リファクタリング計画", "技術的負債の整理", "段階的移行", or "レガシー改善". Require hotspot evidence, an incremental migration pattern, a phased and reversible roadmap, and real subagent critique. Do not use for executing small local refactors.
+description: Plan large refactors, technical-debt reduction, staged migrations, or legacy modernization from repository evidence. Use for strategy and prioritization requests; not execution of small local refactors.
 ---
 
 # Refactoring Strategy

@@ -1,6 +1,6 @@
 ---
 name: maximize-research-results
-description: Conduct deep, decision-ready investigations by scoping the question, gathering primary evidence, reconciling competing explanations, and requiring independent subagent critique. Use only when multiple sources, artifacts, or plausible hypotheses must be reconciled; a consequential claim needs broad authoritative verification; or the user explicitly requests deep, comprehensive, or adversarial research. Do not trigger solely from generic requests to investigate, research, analyze, audit, compare, diagnose, find root cause, summarize, or "調査して". Do not use for focused lookups, simple explanations or summaries, routine bug inspection, implementation, PR review, or comparisons answerable through one bounded evidence path. A usable real subagent result is required before completion; if unavailable, report the blocker.
+description: Investigate questions requiring reconciliation of competing evidence or hypotheses, broad verification of consequential claims, or explicitly deep research. Exclude focused lookups, routine diagnosis, simple comparisons, implementation, and PR review.
 ---
 
 # Maximize Research Results

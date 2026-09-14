@@ -1,6 +1,6 @@
 ---
 name: github-pr-review
-description: Review the complete changed-code surface of GitHub pull requests or explicit diffs and produce actionable, evidence-backed findings. Use when the user asks to review a PR by number, URL, branch, commit, commit range, or diff; requests a code-review pass; asks to draft or publish review comments; or requests re-review after fixes. Do not use for implementation unless the user also asks to fix findings.
+description: Review a GitHub PR or explicit branch, commit, range, or diff; report evidence-backed findings, draft review comments, or re-review fixes. Use for code review requests, not implementation unless fixes are also requested.
 ---
 
 # GitHub PR Review
