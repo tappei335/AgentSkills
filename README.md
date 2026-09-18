@@ -21,6 +21,16 @@ This repository manages Codex and Claude skills.
 - Name skill directories exactly the same as the `name` field.
 - Prefer copying a skill to both `codex/` and `claude/` only when the workflow is useful in both agents; adapt tool names separately.
 
+## Japanese documentation
+
+[`write-japanese-docs`](codex/write-japanese-docs/SKILL.md) creates and revises Japanese READMEs, design documents, procedures, technical articles, and reports. A [Claude version](claude/write-japanese-docs/SKILL.md) is also available. It includes revision examples and optional textlint guidance.
+
+After syncing, invoke it with a request such as:
+
+```text
+$write-japanese-docs 実装を確認し、新規利用者向けの README を日本語で作成してください。
+```
+
 ## Sync
 
 Copy repository skills into the local agent skill directories:

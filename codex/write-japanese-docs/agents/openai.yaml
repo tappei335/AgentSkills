@@ -1,0 +1,4 @@
+interface:
+  display_name: "日本語ドキュメント作成"
+  short_description: "README・設計書・手順書・技術記事を根拠に基づいて作成・推敲する"
+  default_prompt: "$write-japanese-docs を使って、対象読者と根拠を確認し、読みやすい日本語ドキュメントを作成・推敲してください。"
